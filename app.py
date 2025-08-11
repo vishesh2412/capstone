@@ -12,6 +12,18 @@ import base64
 from typing import Dict, Any, Optional
 import os
 from contextlib import contextmanager
+from dotenv import load_dotenv
+import os
+
+# Load .env file
+load_dotenv()
+
+# Read DB config from environment variables
+DB_HOST = os.getenv("DB_HOST")
+DB_NAME = os.getenv("DB_NAME")
+DB_USER = os.getenv("DB_USER")
+DB_PASSWORD = os.getenv("DB_PASSWORD")
+DB_PORT = os.getenv("DB_PORT")
 
 # Page configuration
 st.set_page_config(
