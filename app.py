@@ -171,9 +171,8 @@ st.markdown("""
 # Database Configuration
 @st.cache_resource
 def init_connection():
-    """Initialize PostgreSQL connection"""
+    """Initialize PostgreSQL connection with better error handling"""
     try:
-        # Database configuration - update these with your PostgreSQL credentials
         DB_CONFIG = {
             'host': os.getenv('DB_HOST', 'localhost'),
             'database': os.getenv('DB_NAME', 'sugarcane_app'),
@@ -183,30 +182,64 @@ def init_connection():
         }
         
         connection = psycopg2.connect(**DB_CONFIG)
+        # Test the connection
+        cursor = connection.cursor()
+        cursor.execute('SELECT 1')
+        cursor.close()
         return connection
+    except psycopg2.OperationalError as e:
+        st.error(f"❌ Database connection failed: PostgreSQL server may not be running")
+        st.info("💡 Please start your PostgreSQL service and ensure the database 'sugarcane_app' exists.")
+        return None
     except Exception as e:
-        st.error(f"❌ Database connection failed: {str(e)}")
-        st.info("💡 Please check your PostgreSQL configuration and ensure the database is running.")
+        st.error(f"❌ Database error: {str(e)}")
         return None
 
 @contextmanager
 def get_db_cursor():
-    """Context manager for database operations"""
-    conn = init_connection()
-    if conn:
-        try:
-            cursor = conn.cursor(cursor_factory=RealDictCursor)
-            yield cursor
-            conn.commit()
-        except Exception as e:
-            conn.rollback()
-            st.error(f"Database error: {str(e)}")
+    """Context manager for database operations with improved error handling"""
+    conn = None
+    cursor = None
+    
+    try:
+        conn = init_connection()
+        if conn is None:
             yield None
-        finally:
-            cursor.close()
-            conn.close()
-    else:
+            return
+            
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+        yield cursor
+        conn.commit()
+        
+    except psycopg2.InterfaceError:
+        st.error("❌ Database connection lost. Please refresh the page.")
         yield None
+    except Exception as e:
+        if conn:
+            conn.rollback()
+        st.error(f"Database error: {str(e)}")
+        yield None
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
+
+def check_database_connection():
+    """Check if database is accessible"""
+    try:
+        conn = psycopg2.connect(
+            host=os.getenv('DB_HOST', 'localhost'),
+            database=os.getenv('DB_NAME', 'sugarcane_app'),
+            user=os.getenv('DB_USER', 'postgres'),
+            password=os.getenv('DB_PASSWORD', 'password'),
+            port=os.getenv('DB_PORT', '5432')
+        )
+        conn.close()
+        return True
+    except:
+        return False
+
 
 def create_tables():
     """Create database tables if they don't exist"""
@@ -487,29 +520,35 @@ def home_page():
         </div>
         """, unsafe_allow_html=True)
     
-    # Statistics section with real data from database
+    # Statistics section with database connection check
     st.markdown("---")
     
-    # Get database stats
-    with get_db_cursor() as cursor:
-        if cursor:
-            try:
-                cursor.execute("SELECT COUNT(*) as total_users FROM users")
-                total_users = cursor.fetchone()['total_users']
-                
-                cursor.execute("SELECT SUM(scans_performed) as total_scans FROM users")
-                total_scans = cursor.fetchone()['total_scans'] or 0
-                
-                cursor.execute("SELECT SUM(diseases_detected) as total_diseases FROM users")
-                total_diseases = cursor.fetchone()['total_diseases'] or 0
-                
-                cursor.execute("SELECT COUNT(DISTINCT disease_detected) as disease_types FROM scan_history WHERE disease_detected != 'Healthy'")
-                disease_types = cursor.fetchone()['disease_types'] or 0
-                
-            except:
+    # Check database connection before querying
+    if check_database_connection():
+        # Get database stats
+        with get_db_cursor() as cursor:
+            if cursor:
+                try:
+                    cursor.execute("SELECT COUNT(*) as total_users FROM users")
+                    total_users = cursor.fetchone()['total_users']
+                    
+                    cursor.execute("SELECT SUM(scans_performed) as total_scans FROM users")
+                    total_scans = cursor.fetchone()['total_scans'] or 0
+                    
+                    cursor.execute("SELECT SUM(diseases_detected) as total_diseases FROM users")
+                    total_diseases = cursor.fetchone()['total_diseases'] or 0
+                    
+                    cursor.execute("SELECT COUNT(DISTINCT disease_detected) as disease_types FROM scan_history WHERE disease_detected != 'Healthy'")
+                    disease_types = cursor.fetchone()['disease_types'] or 0
+                    
+                except:
+                    total_users, total_scans, total_diseases, disease_types = 0, 0, 0, 0
+            else:
                 total_users, total_scans, total_diseases, disease_types = 0, 0, 0, 0
-        else:
-            total_users, total_scans, total_diseases, disease_types = 0, 0, 0, 0
+    else:
+        # Show demo stats when database is not available
+        st.warning("⚠️ Database not available. Showing demo statistics.")
+        total_users, total_scans, total_diseases, disease_types = 125, 1847, 432, 6
     
     col1, col2, col3, col4 = st.columns(4)
     
@@ -714,3 +753,185 @@ def disease_scanner_page():
         type=['png', 'jpg', 'jpeg'],
         help="Upload a clear image of the sugarcane leaf for analysis"
     )
+
+    # Add this to complete your disease_scanner_page() function:
+
+    if uploaded_file is not None:
+        # Display uploaded image
+        image = Image.open(uploaded_file)
+        
+        col1, col2 = st.columns([1, 1])
+        
+        with col1:
+            st.markdown("""
+            <div class="custom-card">
+                <h3>📷 Uploaded Image</h3>
+            </div>
+            """, unsafe_allow_html=True)
+            st.image(image, caption="Sugarcane Leaf", use_column_width=True)
+        
+        with col2:
+            if st.button("🔍 Analyze Disease", use_container_width=True):
+                with st.spinner("🤖 AI is analyzing your image..."):
+                    # Simulate processing time
+                    import time
+                    time.sleep(2)
+                    
+                    # Get disease detection result
+                    result = detect_disease(image)
+                    
+                    # Save result to database
+                    save_scan_result(st.session_state.user_id, image, uploaded_file.name, result)
+                    
+                    # Display result
+                    if result['name'] == 'Healthy':
+                        st.markdown(f"""
+                        <div class="healthy-result">
+                            <h2>✅ {result['name']}</h2>
+                            <p><strong>Confidence:</strong> {result['confidence']:.1%}</p>
+                            <p><strong>Treatment:</strong> {result['treatment']}</p>
+                        </div>
+                        """, unsafe_allow_html=True)
+                    else:
+                        st.markdown(f"""
+                        <div class="disease-result">
+                            <h2>⚠️ {result['name']} Detected</h2>
+                            <p><strong>Confidence:</strong> {result['confidence']:.1%}</p>
+                            <p><strong>Severity:</strong> {result['severity']}/5</p>
+                            <p><strong>Treatment:</strong> {result['treatment']}</p>
+                        </div>
+                        """, unsafe_allow_html=True)
+                    
+                    # Get detailed disease info
+                    disease_info = get_disease_info(result['name'])
+                    if disease_info:
+                        st.markdown("### 📚 Detailed Information")
+                        
+                        col1, col2 = st.columns(2)
+                        
+                        with col1:
+                            st.markdown(f"""
+                            <div class="custom-card">
+                                <h4>📖 Description</h4>
+                                <p>{disease_info['description']}</p>
+                                <h4>🔍 Causes</h4>
+                                <p>{disease_info['causes']}</p>
+                            </div>
+                            """, unsafe_allow_html=True)
+                        
+                        with col2:
+                            st.markdown(f"""
+                            <div class="custom-card">
+                                <h4>🛡️ Prevention</h4>
+                                <p>{disease_info['prevention']}</p>
+                                <h4>💊 Treatment</h4>
+                                <p>{disease_info['treatment']}</p>
+                            </div>
+                            """, unsafe_allow_html=True)
+
+def analytics_page():
+    """Analytics and insights page"""
+    if not st.session_state.logged_in:
+        st.warning("⚠️ Please login to view analytics.")
+        return
+    
+    st.markdown('<h1 class="main-header">📊 Farm Analytics</h1>', unsafe_allow_html=True)
+    
+    # Get user's scan data for analytics
+    scan_history = get_user_scan_history(st.session_state.user_id)
+    
+    if scan_history.empty:
+        st.info("📋 No data available. Start scanning to see analytics!")
+        return
+    
+    # Disease distribution
+    st.markdown("### 🦠 Disease Distribution")
+    disease_counts = scan_history['disease_detected'].value_counts()
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.bar_chart(disease_counts)
+    
+    with col2:
+        for disease, count in disease_counts.items():
+            percentage = (count / len(scan_history)) * 100
+            st.metric(disease, f"{count} scans", f"{percentage:.1f}%")
+    
+    # Timeline analysis
+    st.markdown("### 📈 Scan Timeline")
+    scan_history['scan_date'] = pd.to_datetime(scan_history['scan_date'])
+    timeline_data = scan_history.groupby(scan_history['scan_date'].dt.date).size()
+    st.line_chart(timeline_data)
+
+# Sidebar navigation
+def sidebar():
+    """Create sidebar navigation"""
+    with st.sidebar:
+        st.markdown("""
+        <div style="text-align: center; padding: 20px;">
+            <h2>🌾 AgriScan Pro</h2>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        if st.session_state.logged_in:
+            st.markdown(f"**👋 Welcome, {st.session_state.user_profile.get('full_name', 'User')}!**")
+            
+            # Navigation menu
+            menu_options = {
+                "🏠 Home": "Home",
+                "📸 Disease Scanner": "Disease Scanner", 
+                "👤 Profile": "Profile",
+                "📊 Analytics": "Analytics"
+            }
+            
+            selected = st.selectbox("Navigate to:", list(menu_options.keys()))
+            st.session_state.page = menu_options[selected]
+            
+            st.markdown("---")
+            
+            # Quick stats
+            profile = st.session_state.user_profile
+            st.metric("Total Scans", profile.get('scans_performed', 0))
+            st.metric("Diseases Found", profile.get('diseases_detected', 0))
+            
+            st.markdown("---")
+            
+            # Logout button
+            if st.button("🚪 Logout", use_container_width=True):
+                st.session_state.logged_in = False
+                st.session_state.user_profile = {}
+                st.session_state.page = "Home"
+                st.rerun()
+        else:
+            # Login prompt
+            st.markdown("### 🔐 Please Login")
+            if st.button("📝 Login / Register", use_container_width=True):
+                st.session_state.page = "Login"
+                st.rerun()
+
+# Main application logic
+def main():
+    """Main application function"""
+    # Initialize page state
+    if 'page' not in st.session_state:
+        st.session_state.page = "Home"
+    
+    # Create sidebar
+    sidebar()
+    
+    # Route to appropriate page
+    if st.session_state.page == "Home":
+        home_page()
+    elif st.session_state.page == "Login":
+        login_page()
+    elif st.session_state.page == "Profile":
+        profile_page()
+    elif st.session_state.page == "Disease Scanner":
+        disease_scanner_page()
+    elif st.session_state.page == "Analytics":
+        analytics_page()
+
+# Run the application
+if __name__ == "__main__":
+    main()
