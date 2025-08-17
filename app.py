@@ -854,32 +854,42 @@ def home_page():
     </div>
     """, unsafe_allow_html=True)
     
-    # Action buttons
-    col1, col2, col3 = st.columns([1, 2, 1])
-    with col2:
-        if not st.session_state.logged_in:
-            # Sign up button for non-logged users
-            signup_clicked = st.button("🌱 Get Started - Join AgriScan Pro", key="cta_signup", use_container_width=True)
-            if signup_clicked:
+    # Action buttons with form-based approach for better handling
+    if not st.session_state.logged_in:
+        col1, col2, col3 = st.columns([1, 2, 1])
+        with col2:
+            if st.button("🌱 Get Started - Join AgriScan Pro", key="cta_signup", use_container_width=True):
                 st.session_state.page = "Login"
                 st.rerun()
-        else:
-            # Disease detection button for logged users
-            scan_clicked = st.button("📸 Start Disease Detection", key="cta_scan", use_container_width=True)
-            if scan_clicked:
+    else:
+        # Main CTA button
+        col1, col2, col3 = st.columns([1, 2, 1])
+        with col2:
+            if st.button("📸 Start Disease Detection", key="cta_scan", use_container_width=True, type="primary"):
                 st.session_state.page = "Disease Scanner"
                 st.rerun()
-            
-            # Also add quick access buttons
-            col_a, col_b = st.columns(2)
-            with col_a:
-                if st.button("👤 View Profile", key="quick_profile", use_container_width=True):
-                    st.session_state.page = "Profile"
-                    st.rerun()
-            with col_b:
-                if st.button("📊 Analytics", key="quick_analytics", use_container_width=True):
-                    st.session_state.page = "Analytics"
-                    st.rerun()
+        
+        # Quick access buttons
+        st.markdown("<br>", unsafe_allow_html=True)
+        col1, col2, col3 = st.columns([1, 1, 1])
+        
+        with col1:
+            if st.button("👤 View Profile", key="quick_profile", use_container_width=True):
+                st.session_state.page = "Profile"
+                st.rerun()
+        
+        with col2:
+            if st.button("📊 View Analytics", key="quick_analytics", use_container_width=True):
+                st.session_state.page = "Analytics"  
+                st.rerun()
+                
+        with col3:
+            # Add a logout button here as well
+            if st.button("🚪 Logout", key="quick_logout", use_container_width=True):
+                st.session_state.logged_in = False
+                st.session_state.user_profile = {}
+                st.session_state.page = "Home"
+                st.rerun()
 
 def login_page():
     """Login and registration page"""
@@ -1260,7 +1270,7 @@ def sidebar():
             </div>
             """, unsafe_allow_html=True)
             
-            # Navigation menu
+            # Navigation menu with better state management
             menu_options = {
                 "🏠 Home": "Home",
                 "📸 Disease Scanner": "Disease Scanner", 
@@ -1268,8 +1278,18 @@ def sidebar():
                 "📊 Analytics": "Analytics"
             }
             
-            selected = st.selectbox("🧭 Navigate to:", list(menu_options.keys()))
-            if st.session_state.page != menu_options[selected]:
+            # Find current selection based on current page
+            current_selection = "🏠 Home"  # default
+            for key, value in menu_options.items():
+                if value == st.session_state.page:
+                    current_selection = key
+                    break
+            
+            selected = st.selectbox("🧭 Navigate to:", list(menu_options.keys()), 
+                                  index=list(menu_options.keys()).index(current_selection))
+            
+            # Only change page if selection is different
+            if menu_options[selected] != st.session_state.page:
                 st.session_state.page = menu_options[selected]
                 st.rerun()
             
