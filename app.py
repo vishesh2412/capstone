@@ -854,16 +854,32 @@ def home_page():
     </div>
     """, unsafe_allow_html=True)
     
+    # Action buttons
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
         if not st.session_state.logged_in:
-            if st.button("🌱 Get Started - Join AgriScan Pro", key="cta_signup"):
+            # Sign up button for non-logged users
+            signup_clicked = st.button("🌱 Get Started - Join AgriScan Pro", key="cta_signup", use_container_width=True)
+            if signup_clicked:
                 st.session_state.page = "Login"
                 st.rerun()
         else:
-            if st.button("📸 Start Disease Detection", key="cta_scan"):
+            # Disease detection button for logged users
+            scan_clicked = st.button("📸 Start Disease Detection", key="cta_scan", use_container_width=True)
+            if scan_clicked:
                 st.session_state.page = "Disease Scanner"
                 st.rerun()
+            
+            # Also add quick access buttons
+            col_a, col_b = st.columns(2)
+            with col_a:
+                if st.button("👤 View Profile", key="quick_profile", use_container_width=True):
+                    st.session_state.page = "Profile"
+                    st.rerun()
+            with col_b:
+                if st.button("📊 Analytics", key="quick_analytics", use_container_width=True):
+                    st.session_state.page = "Analytics"
+                    st.rerun()
 
 def login_page():
     """Login and registration page"""
@@ -1253,7 +1269,9 @@ def sidebar():
             }
             
             selected = st.selectbox("🧭 Navigate to:", list(menu_options.keys()))
-            st.session_state.page = menu_options[selected]
+            if st.session_state.page != menu_options[selected]:
+                st.session_state.page = menu_options[selected]
+                st.rerun()
             
             st.markdown("---")
             
