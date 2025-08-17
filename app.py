@@ -13,17 +13,10 @@ from typing import Dict, Any, Optional
 import os
 from contextlib import contextmanager
 from dotenv import load_dotenv
-import os
+import time
 
 # Load .env file
 load_dotenv()
-
-# Read DB config from environment variables
-DB_HOST = os.getenv("DB_HOST")
-DB_NAME = os.getenv("DB_NAME")
-DB_USER = os.getenv("DB_USER")
-DB_PASSWORD = os.getenv("DB_PASSWORD")
-DB_PORT = os.getenv("DB_PORT")
 
 # Page configuration
 st.set_page_config(
@@ -33,7 +26,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS for sexy UI (same as before)
+# Custom CSS for sexy UI
 st.markdown("""
 <style>
     /* Main background and container styling */
@@ -171,145 +164,173 @@ st.markdown("""
 # Database Configuration
 @st.cache_resource
 def init_connection():
-    """Initialize PostgreSQL connection with better error handling"""
-    try:
-        DB_CONFIG = {
-            'host': os.getenv('DB_HOST', 'localhost'),
-            'database': os.getenv('DB_NAME', 'sugarcane_app'),
-            'user': os.getenv('DB_USER', 'postgres'),
-            'password': os.getenv('DB_PASSWORD', 'password'),
-            'port': os.getenv('DB_PORT', '5432')
-        }
-        
-        connection = psycopg2.connect(**DB_CONFIG)
-        # Test the connection
-        cursor = connection.cursor()
-        cursor.execute('SELECT 1')
-        cursor.close()
-        return connection
-    except psycopg2.OperationalError as e:
-        st.error(f"❌ Database connection failed: PostgreSQL server may not be running")
-        st.info("💡 Please start your PostgreSQL service and ensure the database 'sugarcane_app' exists.")
-        return None
-    except Exception as e:
-        st.error(f"❌ Database error: {str(e)}")
-        return None
+    """Initialize PostgreSQL connection with retry logic"""
+    DB_CONFIG = {
+        'host': os.getenv('DB_HOST', 'localhost'),
+        'database': os.getenv('DB_NAME', 'sugarcane_app'),
+        'user': os.getenv('DB_USER', 'postgres'),
+        'password': os.getenv('DB_PASSWORD', 'password'),
+        'port': os.getenv('DB_PORT', '5432')
+    }
+    
+    max_retries = 3
+    retry_delay = 1
+    
+    for attempt in range(max_retries):
+        try:
+            connection = psycopg2.connect(
+                **DB_CONFIG,
+                connect_timeout=10,
+                keepalives=1,
+                keepalives_idle=30,
+                keepalives_interval=10,
+                keepalives_count=5
+            )
+            connection.autocommit = False
+            
+            # Test connection
+            cursor = connection.cursor()
+            cursor.execute('SELECT 1')
+            cursor.close()
+            
+            return connection
+            
+        except psycopg2.OperationalError as e:
+            if attempt < max_retries - 1:
+                time.sleep(retry_delay)
+                retry_delay *= 2
+            else:
+                return None
+        except Exception as e:
+            return None
+    
+    return None
 
 @contextmanager
 def get_db_cursor():
-    """Context manager for database operations with improved error handling"""
-    conn = None
+    """Simplified database cursor context manager"""
+    connection = None
     cursor = None
     
     try:
-        conn = init_connection()
-        if conn is None:
-            yield None
-            return
-            
-        cursor = conn.cursor(cursor_factory=RealDictCursor)
-        yield cursor
-        conn.commit()
+        connection = psycopg2.connect(
+            host=os.getenv('DB_HOST', 'localhost'),
+            database=os.getenv('DB_NAME', 'sugarcane_app'),
+            user=os.getenv('DB_USER', 'postgres'),
+            password=os.getenv('DB_PASSWORD', 'password'),
+            port=os.getenv('DB_PORT', '5432'),
+            connect_timeout=5
+        )
         
-    except psycopg2.InterfaceError:
-        st.error("❌ Database connection lost. Please refresh the page.")
+        cursor = connection.cursor(cursor_factory=RealDictCursor)
+        yield cursor
+        connection.commit()
+        
+    except psycopg2.Error:
+        if connection:
+            connection.rollback()
         yield None
-    except Exception as e:
-        if conn:
-            conn.rollback()
-        st.error(f"Database error: {str(e)}")
+    except Exception:
+        if connection:
+            connection.rollback()
         yield None
     finally:
         if cursor:
             cursor.close()
-        if conn:
-            conn.close()
+        if connection:
+            connection.close()
 
-def check_database_connection():
-    """Check if database is accessible"""
+def is_database_available():
+    """Quick check if database is available"""
     try:
         conn = psycopg2.connect(
             host=os.getenv('DB_HOST', 'localhost'),
             database=os.getenv('DB_NAME', 'sugarcane_app'),
             user=os.getenv('DB_USER', 'postgres'),
             password=os.getenv('DB_PASSWORD', 'password'),
-            port=os.getenv('DB_PORT', '5432')
+            port=os.getenv('DB_PORT', '5432'),
+            connect_timeout=2
         )
         conn.close()
         return True
     except:
         return False
 
+def create_tables_with_cursor(cursor):
+    """Create tables using provided cursor"""
+    # Users table
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS users (
+        id SERIAL PRIMARY KEY,
+        username VARCHAR(50) UNIQUE NOT NULL,
+        password_hash VARCHAR(64) NOT NULL,
+        full_name VARCHAR(100) NOT NULL,
+        farm_location VARCHAR(100),
+        farm_size DECIMAL(10,2),
+        join_date DATE DEFAULT CURRENT_DATE,
+        scans_performed INTEGER DEFAULT 0,
+        diseases_detected INTEGER DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+    """)
+    
+    # Scan history table
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS scan_history (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        image_data BYTEA,
+        image_name VARCHAR(255),
+        disease_detected VARCHAR(100),
+        confidence_score DECIMAL(5,3),
+        severity_level INTEGER,
+        treatment_recommendation TEXT,
+        scan_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+    """)
+    
+    # Disease information table
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS disease_info (
+        id SERIAL PRIMARY KEY,
+        disease_name VARCHAR(100) UNIQUE NOT NULL,
+        description TEXT,
+        causes TEXT,
+        prevention TEXT,
+        treatment TEXT
+    );
+    """)
+    
+    # Insert disease information
+    disease_data = [
+        ('Healthy', 'No disease detected. Leaf appears healthy.', 'N/A', 'Continue regular care and monitoring.', 'No treatment needed.'),
+        ('Red Rot', 'A serious fungal disease causing reddish discoloration and rotting of internodes.', 'Caused by Colletotrichum falcatum fungus, spread through infected setts and tools.', 'Use disease-resistant varieties, treat setts with fungicide, maintain field hygiene.', 'Apply fungicide treatment. Remove affected parts immediately.'),
+        ('Mosaic', 'Viral disease causing characteristic mosaic patterns on leaves.', 'Spread by aphids and through infected planting material.', 'Use virus-free planting material, control aphid vectors, remove infected plants.', 'Use disease-resistant varieties. Remove infected plants to prevent spread.'),
+        ('Rust', 'Fungal disease causing orange-red pustules on leaf surface.', 'Caused by Puccinia species, favored by high humidity and moderate temperatures.', 'Improve air circulation, apply preventive fungicides, use resistant varieties.', 'Apply copper-based fungicide. Improve air circulation around plants.'),
+        ('Smut', 'Fungal disease causing black, sooty growth on shoots.', 'Caused by Sporisorium scitamineum, spread through airborne spores.', 'Use healthy planting material, apply systemic fungicides, remove infected shoots.', 'Remove infected shoots immediately. Apply systemic fungicide.'),
+        ('Yellow Leaf', 'Viral disease causing yellowing and necrosis of leaves.', 'Caused by Sugarcane yellow leaf virus, transmitted by aphids.', 'Control aphid populations, use virus-tested planting material, maintain plant nutrition.', 'Check soil nutrition. Apply balanced fertilizer. Control aphid vectors.')
+    ]
+    
+    for disease in disease_data:
+        cursor.execute("""
+        INSERT INTO disease_info (disease_name, description, causes, prevention, treatment)
+        VALUES (%s, %s, %s, %s, %s)
+        ON CONFLICT (disease_name) DO NOTHING;
+        """, disease)
 
-def create_tables():
-    """Create database tables if they don't exist"""
-    with get_db_cursor() as cursor:
-        if cursor:
-            try:
-                # Users table
-                cursor.execute("""
-                CREATE TABLE IF NOT EXISTS users (
-                    id SERIAL PRIMARY KEY,
-                    username VARCHAR(50) UNIQUE NOT NULL,
-                    password_hash VARCHAR(64) NOT NULL,
-                    full_name VARCHAR(100) NOT NULL,
-                    farm_location VARCHAR(100),
-                    farm_size DECIMAL(10,2),
-                    join_date DATE DEFAULT CURRENT_DATE,
-                    scans_performed INTEGER DEFAULT 0,
-                    diseases_detected INTEGER DEFAULT 0,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                );
-                """)
-                
-                # Scan history table
-                cursor.execute("""
-                CREATE TABLE IF NOT EXISTS scan_history (
-                    id SERIAL PRIMARY KEY,
-                    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-                    image_data BYTEA,
-                    image_name VARCHAR(255),
-                    disease_detected VARCHAR(100),
-                    confidence_score DECIMAL(5,3),
-                    severity_level INTEGER,
-                    treatment_recommendation TEXT,
-                    scan_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                );
-                """)
-                
-                # Disease information table
-                cursor.execute("""
-                CREATE TABLE IF NOT EXISTS disease_info (
-                    id SERIAL PRIMARY KEY,
-                    disease_name VARCHAR(100) UNIQUE NOT NULL,
-                    description TEXT,
-                    causes TEXT,
-                    prevention TEXT,
-                    treatment TEXT
-                );
-                """)
-                
-                # Insert disease information if not exists
-                disease_data = [
-                    ('Healthy', 'No disease detected. Leaf appears healthy.', 'N/A', 'Continue regular care and monitoring.', 'No treatment needed.'),
-                    ('Red Rot', 'A serious fungal disease causing reddish discoloration and rotting of internodes.', 'Caused by Colletotrichum falcatum fungus, spread through infected setts and tools.', 'Use disease-resistant varieties, treat setts with fungicide, maintain field hygiene.', 'Apply fungicide treatment. Remove affected parts immediately.'),
-                    ('Mosaic', 'Viral disease causing characteristic mosaic patterns on leaves.', 'Spread by aphids and through infected planting material.', 'Use virus-free planting material, control aphid vectors, remove infected plants.', 'Use disease-resistant varieties. Remove infected plants to prevent spread.'),
-                    ('Rust', 'Fungal disease causing orange-red pustules on leaf surface.', 'Caused by Puccinia species, favored by high humidity and moderate temperatures.', 'Improve air circulation, apply preventive fungicides, use resistant varieties.', 'Apply copper-based fungicide. Improve air circulation around plants.'),
-                    ('Smut', 'Fungal disease causing black, sooty growth on shoots.', 'Caused by Sporisorium scitamineum, spread through airborne spores.', 'Use healthy planting material, apply systemic fungicides, remove infected shoots.', 'Remove infected shoots immediately. Apply systemic fungicide.'),
-                    ('Yellow Leaf', 'Viral disease causing yellowing and necrosis of leaves.', 'Caused by Sugarcane yellow leaf virus, transmitted by aphids.', 'Control aphid populations, use virus-tested planting material, maintain plant nutrition.', 'Check soil nutrition. Apply balanced fertilizer. Control aphid vectors.')
-                ]
-                
-                for disease in disease_data:
-                    cursor.execute("""
-                    INSERT INTO disease_info (disease_name, description, causes, prevention, treatment)
-                    VALUES (%s, %s, %s, %s, %s)
-                    ON CONFLICT (disease_name) DO NOTHING;
-                    """, disease)
-                    
-                st.success("✅ Database tables created successfully!")
-                
-            except Exception as e:
-                st.error(f"❌ Error creating tables: {str(e)}")
+def initialize_database_once():
+    """Initialize database tables only once"""
+    if 'db_init_attempted' not in st.session_state:
+        st.session_state.db_init_attempted = True
+        
+        if is_database_available():
+            with get_db_cursor() as cursor:
+                if cursor:
+                    try:
+                        create_tables_with_cursor(cursor)
+                        st.success("✅ Database tables ready!")
+                    except Exception as e:
+                        st.warning(f"Database setup issue: {str(e)}")
 
 # Database helper functions
 def register_user(username: str, password: str, full_name: str, farm_location: str, farm_size: float) -> bool:
@@ -324,9 +345,8 @@ def register_user(username: str, password: str, full_name: str, farm_location: s
                 """, (username, password_hash, full_name, farm_location, farm_size))
                 return True
             except psycopg2.IntegrityError:
-                return False  # Username already exists
+                return False
             except Exception as e:
-                st.error(f"Registration error: {str(e)}")
                 return False
     return False
 
@@ -342,7 +362,6 @@ def authenticate_user(username: str, password: str) -> Optional[Dict]:
                 user = cursor.fetchone()
                 return dict(user) if user else None
             except Exception as e:
-                st.error(f"Authentication error: {str(e)}")
                 return None
     return None
 
@@ -355,7 +374,6 @@ def get_user_profile(user_id: int) -> Optional[Dict]:
                 user = cursor.fetchone()
                 return dict(user) if user else None
             except Exception as e:
-                st.error(f"Profile fetch error: {str(e)}")
                 return None
     return None
 
@@ -371,7 +389,6 @@ def update_user_profile(user_id: int, full_name: str, farm_location: str, farm_s
                 """, (full_name, farm_location, farm_size, user_id))
                 return True
             except Exception as e:
-                st.error(f"Profile update error: {str(e)}")
                 return False
     return False
 
@@ -403,7 +420,6 @@ def save_scan_result(user_id: int, image: Image.Image, image_name: str, result: 
                 
                 return True
             except Exception as e:
-                st.error(f"Save scan error: {str(e)}")
                 return False
     return False
 
@@ -428,7 +444,6 @@ def get_user_scan_history(user_id: int) -> pd.DataFrame:
                 else:
                     return pd.DataFrame()
             except Exception as e:
-                st.error(f"History fetch error: {str(e)}")
                 return pd.DataFrame()
     return pd.DataFrame()
 
@@ -442,7 +457,7 @@ def get_scan_image(scan_id: int) -> Optional[Image.Image]:
                 if result and result['image_data']:
                     return Image.open(io.BytesIO(result['image_data']))
             except Exception as e:
-                st.error(f"Image fetch error: {str(e)}")
+                pass
     return None
 
 def get_disease_info(disease_name: str) -> Optional[Dict]:
@@ -456,14 +471,8 @@ def get_disease_info(disease_name: str) -> Optional[Dict]:
                 result = cursor.fetchone()
                 return dict(result) if result else None
             except Exception as e:
-                st.error(f"Disease info error: {str(e)}")
                 return None
     return None
-
-# Initialize database tables
-if 'db_initialized' not in st.session_state:
-    create_tables()
-    st.session_state.db_initialized = True
 
 # Initialize session state
 if 'logged_in' not in st.session_state:
@@ -520,35 +529,38 @@ def home_page():
         </div>
         """, unsafe_allow_html=True)
     
-    # Statistics section with database connection check
+    # Statistics section
     st.markdown("---")
     
-    # Check database connection before querying
-    if check_database_connection():
-        # Get database stats
+    # Try to get real stats, fallback to demo stats
+    total_users = total_scans = total_diseases = disease_types = 0
+    
+    if is_database_available():
         with get_db_cursor() as cursor:
             if cursor:
                 try:
                     cursor.execute("SELECT COUNT(*) as total_users FROM users")
-                    total_users = cursor.fetchone()['total_users']
+                    result = cursor.fetchone()
+                    total_users = result['total_users'] if result else 0
                     
-                    cursor.execute("SELECT SUM(scans_performed) as total_scans FROM users")
-                    total_scans = cursor.fetchone()['total_scans'] or 0
+                    cursor.execute("SELECT COALESCE(SUM(scans_performed), 0) as total_scans FROM users")
+                    result = cursor.fetchone()
+                    total_scans = result['total_scans'] if result else 0
                     
-                    cursor.execute("SELECT SUM(diseases_detected) as total_diseases FROM users")
-                    total_diseases = cursor.fetchone()['total_diseases'] or 0
+                    cursor.execute("SELECT COALESCE(SUM(diseases_detected), 0) as total_diseases FROM users")
+                    result = cursor.fetchone()
+                    total_diseases = result['total_diseases'] if result else 0
                     
                     cursor.execute("SELECT COUNT(DISTINCT disease_detected) as disease_types FROM scan_history WHERE disease_detected != 'Healthy'")
-                    disease_types = cursor.fetchone()['disease_types'] or 0
+                    result = cursor.fetchone()
+                    disease_types = result['disease_types'] if result else 0
                     
                 except:
-                    total_users, total_scans, total_diseases, disease_types = 0, 0, 0, 0
-            else:
-                total_users, total_scans, total_diseases, disease_types = 0, 0, 0, 0
+                    # If queries fail, use demo data
+                    total_users, total_scans, total_diseases, disease_types = 42, 186, 89, 5
     else:
-        # Show demo stats when database is not available
-        st.warning("⚠️ Database not available. Showing demo statistics.")
-        total_users, total_scans, total_diseases, disease_types = 125, 1847, 432, 6
+        # Database not available - use demo data
+        total_users, total_scans, total_diseases, disease_types = 42, 186, 89, 5
     
     col1, col2, col3, col4 = st.columns(4)
     
@@ -677,7 +689,7 @@ def profile_page():
             <p><strong>🌍 Location:</strong> {profile.get('farm_location', 'N/A')}</p>
             <p><strong>🚜 Farm Size:</strong> {profile.get('farm_size', 0)} acres</p>
             <p><strong>📅 Member Since:</strong> {profile.get('join_date', 'N/A')}</p>
-            <p><strong>🔍 Total Scans:</strong> {profile.get('scans_performed', 0)}</p>
+            <p><strong>📸 Total Scans:</strong> {profile.get('scans_performed', 0)}</p>
             <p><strong>🦠 Diseases Detected:</strong> {profile.get('diseases_detected', 0)}</p>
         </div>
         """, unsafe_allow_html=True)
@@ -690,7 +702,7 @@ def profile_page():
     if not scan_history.empty:
         # Display history with image preview option
         for idx, row in scan_history.head(10).iterrows():
-            with st.expander(f"🔍 {row['disease_detected']} - {row['scan_date']} (Confidence: {row['confidence_score']:.1%})"):
+            with st.expander(f"📸 {row['disease_detected']} - {row['scan_date']} (Confidence: {row['confidence_score']:.1%})"):
                 col1, col2 = st.columns([1, 2])
                 
                 with col1:
@@ -753,8 +765,6 @@ def disease_scanner_page():
         type=['png', 'jpg', 'jpeg'],
         help="Upload a clear image of the sugarcane leaf for analysis"
     )
-
-    # Add this to complete your disease_scanner_page() function:
 
     if uploaded_file is not None:
         # Display uploaded image
@@ -916,6 +926,9 @@ def main():
     # Initialize page state
     if 'page' not in st.session_state:
         st.session_state.page = "Home"
+    
+    # Initialize database
+    initialize_database_once()
     
     # Create sidebar
     sidebar()
