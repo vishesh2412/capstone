@@ -26,7 +26,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"  # Always start expanded
 )
 
-# Custom CSS for modern black & green UI with fixed sidebar
+# Custom CSS for modern black & green UI with permanent sidebar
 st.markdown("""
 <style>
     /* Import Google Fonts */
@@ -37,34 +37,47 @@ st.markdown("""
         font-family: 'Inter', sans-serif;
     }
     
-    /* Force sidebar to be visible and prevent permanent collapse */
-    .css-1d391kg {
+    /* Sidebar styling - PERMANENT VERSION */
+    section[data-testid="stSidebar"] {
         background: linear-gradient(180deg, #0a0a0a 0%, #1a1a1a 100%);
         border-right: 2px solid rgba(34, 197, 94, 0.2);
         min-width: 280px !important;
+        max-width: 280px !important;
         width: 280px !important;
     }
     
-    /* Ensure sidebar content is always visible */
-    .css-1d391kg .css-1v3fvcr {
+    /* Sidebar content styling */
+    section[data-testid="stSidebar"] .css-1d391kg {
+        background: transparent;
+    }
+    
+    section[data-testid="stSidebar"] .css-1v3fvcr {
         color: #ffffff;
     }
     
-    /* Fix sidebar toggle button behavior */
-    .css-1rs6os {
-        background: linear-gradient(135deg, #16a34a, #22c55e) !important;
-        border: 1px solid rgba(34, 197, 94, 0.3) !important;
-        color: white !important;
+    /* Hide sidebar toggle button completely */
+    button[data-testid="collapsedControl"] {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
     }
     
-    .css-1rs6os:hover {
-        background: linear-gradient(135deg, #22c55e, #4ade80) !important;
-        border: 1px solid rgba(34, 197, 94, 0.5) !important;
-        transform: scale(1.05);
+    /* Prevent sidebar from collapsing */
+    section[data-testid="stSidebar"][aria-expanded="false"] {
+        min-width: 280px !important;
+        max-width: 280px !important;
+        width: 280px !important;
+        transform: translateX(0) !important;
     }
     
     /* Main content area adjustments */
     .css-18e3th9 {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+    
+    .main .block-container {
+        padding-top: 1rem;
         padding-left: 1rem;
         padding-right: 1rem;
     }
@@ -430,17 +443,32 @@ st.markdown("""
     footer {visibility: hidden;}
     header {visibility: hidden;}
     
-    /* Sidebar toggle button fix */
-    .css-1x8cf1d {
-        background: rgba(34, 197, 94, 0.1) !important;
-        border: 1px solid rgba(34, 197, 94, 0.3) !important;
-        border-radius: 8px !important;
+    /* Radio button styling for navigation */
+    .stRadio > div {
+        background: transparent;
     }
     
-    .css-1x8cf1d:hover {
-        background: rgba(34, 197, 94, 0.2) !important;
-        border: 1px solid rgba(34, 197, 94, 0.5) !important;
-        transform: scale(1.1) !important;
+    .stRadio > div > label {
+        background: rgba(26, 26, 26, 0.4);
+        padding: 12px 16px;
+        border-radius: 10px;
+        margin: 5px 0;
+        border: 1px solid rgba(34, 197, 94, 0.2);
+        transition: all 0.3s ease;
+        cursor: pointer;
+        display: block;
+    }
+    
+    .stRadio > div > label:hover {
+        background: rgba(34, 197, 94, 0.1);
+        border-color: rgba(34, 197, 94, 0.4);
+        transform: scale(1.02);
+    }
+    
+    .stRadio > div > label[data-selected="true"] {
+        background: linear-gradient(135deg, #16a34a, #22c55e);
+        border-color: #22c55e;
+        color: white;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -763,8 +791,6 @@ if 'logged_in' not in st.session_state:
     st.session_state.logged_in = False
 if 'user_profile' not in st.session_state:
     st.session_state.user_profile = {}
-if 'sidebar_state' not in st.session_state:
-    st.session_state.sidebar_state = 'expanded'
 
 # Mock disease detection function
 def detect_disease(image):
@@ -938,7 +964,7 @@ def login_page():
     """Login and registration page"""
     st.markdown('<h1 class="main-header">🔐 Access Your Account</h1>', unsafe_allow_html=True)
     
-    tab1, tab2 = st.tabs(["🔑 Login", "🌱 Register"])
+    tab1, tab2 = st.tabs(["🔐 Login", "🌱 Register"])
     
     with tab1:
         st.markdown("""
@@ -1391,7 +1417,7 @@ def sidebar():
             # Login prompt with better styling
             st.markdown("""
             <div class="custom-card" style="text-align: center;">
-                <div style="font-size: 3rem; margin-bottom: 15px;">🔐</div>
+                <div style="font-size: 3rem; margin-bottom: 15px;">🔒</div>
                 <h3 style="color: #22c55e; margin-bottom: 10px;">Access Required</h3>
                 <p style="font-size: 0.9rem; margin-bottom: 20px;">Login to unlock AI-powered crop protection features</p>
             </div>
@@ -1431,10 +1457,6 @@ def main():
         # Create sidebar
         sidebar()
         
-        # Add a sidebar state persistence mechanism
-        if 'sidebar_visible' not in st.session_state:
-            st.session_state.sidebar_visible = True
-        
         # Route to appropriate page with error handling
         try:
             if st.session_state.page == "Home":
@@ -1469,46 +1491,9 @@ def main():
         with st.expander("🔧 Technical Details"):
             st.code(str(e))
 
-# Add JavaScript for sidebar persistence (optional enhancement)
-def add_sidebar_persistence():
-    """Add JavaScript to maintain sidebar state"""
-    st.markdown("""
-    <script>
-    // Prevent sidebar from permanently collapsing
-    function maintainSidebarState() {
-        const sidebar = document.querySelector('[data-testid="stSidebar"]');
-        if (sidebar) {
-            // Add event listener to sidebar toggle
-            const toggleBtn = document.querySelector('[data-testid="collapsedControl"]');
-            if (toggleBtn) {
-                toggleBtn.addEventListener('click', function() {
-                    // Store sidebar state
-                    localStorage.setItem('sidebarState', sidebar.style.display === 'none' ? 'collapsed' : 'expanded');
-                });
-            }
-            
-            // Restore sidebar state
-            const savedState = localStorage.getItem('sidebarState');
-            if (savedState === 'expanded') {
-                sidebar.style.display = 'block';
-            }
-        }
-    }
-    
-    // Run on page load
-    document.addEventListener('DOMContentLoaded', maintainSidebarState);
-    
-    // Also run after a short delay to catch dynamic content
-    setTimeout(maintainSidebarState, 1000);
-    </script>
-    """, unsafe_allow_html=True)
-
 # Run the application
 if __name__ == "__main__":
     try:
-        # Add sidebar persistence enhancement
-        add_sidebar_persistence()
-        
         # Run main application
         main()
         
