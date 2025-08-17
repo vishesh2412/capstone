@@ -20,7 +20,7 @@ load_dotenv()
 
 # Page configuration - Fixed sidebar state management
 st.set_page_config(
-    page_title="AgriScan Pro - Sugarcane Disease Detection",
+    page_title="LIRA Pro - Sugarcane Disease Detection",
     page_icon="🌾",
     layout="wide",
     initial_sidebar_state="expanded"  # Always start expanded
@@ -812,7 +812,7 @@ def detect_disease(image):
 def home_page():
     """Home page with attractive landing"""
     st.markdown('<div class="slide-in-up">', unsafe_allow_html=True)
-    st.markdown('<h1 class="main-header">🌾 AgriScan Pro</h1>', unsafe_allow_html=True)
+    st.markdown('<h1 class="main-header">🌾 LIRA Pro</h1>', unsafe_allow_html=True)
     st.markdown('<p class="sub-header">Next-Gen AI-Powered Sugarcane Disease Detection System</p>', unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
     
@@ -927,7 +927,7 @@ def home_page():
     if not st.session_state.logged_in:
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
-            if st.button("🌱 Get Started - Join AgriScan Pro", key="cta_signup", use_container_width=True):
+            if st.button("🌱 Get Started - Join LIRA Pro", key="cta_signup", use_container_width=True):
                 st.session_state.page = "Login"
                 st.rerun()
     else:
@@ -997,7 +997,7 @@ def login_page():
     with tab2:
         st.markdown("""
         <div class="custom-card">
-            <h3 style="color: #22c55e;">Join AgriScan Community! 🌱</h3>
+            <h3 style="color: #22c55e;">Join LIRA Community! 🌱</h3>
             <p>Create your account and start protecting your crops with AI technology</p>
         </div>
         """, unsafe_allow_html=True)
@@ -1328,7 +1328,7 @@ def sidebar():
     with st.sidebar:
         st.markdown("""
         <div style="text-align: center; padding: 20px; border-bottom: 2px solid rgba(34, 197, 94, 0.2); margin-bottom: 20px;">
-            <h2 style="color: #22c55e; margin: 0;">🌾 AgriScan Pro</h2>
+            <h2 style="color: #22c55e; margin: 0;">🌾 LIRA Pro</h2>
             <p style="color: rgba(255, 255, 255, 0.7); font-size: 0.9rem; margin: 5px 0 0 0;">AI-Powered Crop Protection</p>
         </div>
         """, unsafe_allow_html=True)
