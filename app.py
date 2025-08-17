@@ -18,15 +18,15 @@ import time
 # Load .env file
 load_dotenv()
 
-# Page configuration
+# Page configuration - Fixed sidebar state management
 st.set_page_config(
     page_title="AgriScan Pro - Sugarcane Disease Detection",
     page_icon="🌾",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="expanded"  # Always start expanded
 )
 
-# Custom CSS for modern black & green UI
+# Custom CSS for modern black & green UI with fixed sidebar
 st.markdown("""
 <style>
     /* Import Google Fonts */
@@ -35,6 +35,38 @@ st.markdown("""
     /* Global styling */
     * {
         font-family: 'Inter', sans-serif;
+    }
+    
+    /* Force sidebar to be visible and prevent permanent collapse */
+    .css-1d391kg {
+        background: linear-gradient(180deg, #0a0a0a 0%, #1a1a1a 100%);
+        border-right: 2px solid rgba(34, 197, 94, 0.2);
+        min-width: 280px !important;
+        width: 280px !important;
+    }
+    
+    /* Ensure sidebar content is always visible */
+    .css-1d391kg .css-1v3fvcr {
+        color: #ffffff;
+    }
+    
+    /* Fix sidebar toggle button behavior */
+    .css-1rs6os {
+        background: linear-gradient(135deg, #16a34a, #22c55e) !important;
+        border: 1px solid rgba(34, 197, 94, 0.3) !important;
+        color: white !important;
+    }
+    
+    .css-1rs6os:hover {
+        background: linear-gradient(135deg, #22c55e, #4ade80) !important;
+        border: 1px solid rgba(34, 197, 94, 0.5) !important;
+        transform: scale(1.05);
+    }
+    
+    /* Main content area adjustments */
+    .css-18e3th9 {
+        padding-left: 1rem;
+        padding-right: 1rem;
     }
     
     /* Main background - Deep black gradient */
@@ -131,6 +163,7 @@ st.markdown("""
             inset 0 1px 0 rgba(255, 255, 255, 0.2);
         position: relative;
         overflow: hidden;
+        width: 100%;
     }
     
     .stButton > button::before {
@@ -159,16 +192,6 @@ st.markdown("""
     
     .stButton > button:active {
         transform: translateY(-1px) scale(1.01);
-    }
-    
-    /* Sidebar styling - Dark with green accents */
-    .css-1d391kg {
-        background: linear-gradient(180deg, #0a0a0a 0%, #1a1a1a 100%);
-        border-right: 2px solid rgba(34, 197, 94, 0.2);
-    }
-    
-    .css-1d391kg .css-1v3fvcr {
-        color: #ffffff;
     }
     
     /* Input field styling */
@@ -212,6 +235,11 @@ st.markdown("""
         background: rgba(26, 26, 26, 0.8);
         border: 2px solid rgba(34, 197, 94, 0.3);
         border-radius: 12px;
+    }
+    
+    .stSelectbox > div > div > div {
+        background: rgba(26, 26, 26, 0.9);
+        color: white;
     }
     
     /* Number input styling */
@@ -401,6 +429,19 @@ st.markdown("""
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
+    
+    /* Sidebar toggle button fix */
+    .css-1x8cf1d {
+        background: rgba(34, 197, 94, 0.1) !important;
+        border: 1px solid rgba(34, 197, 94, 0.3) !important;
+        border-radius: 8px !important;
+    }
+    
+    .css-1x8cf1d:hover {
+        background: rgba(34, 197, 94, 0.2) !important;
+        border: 1px solid rgba(34, 197, 94, 0.5) !important;
+        transform: scale(1.1) !important;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -722,6 +763,8 @@ if 'logged_in' not in st.session_state:
     st.session_state.logged_in = False
 if 'user_profile' not in st.session_state:
     st.session_state.user_profile = {}
+if 'sidebar_state' not in st.session_state:
+    st.session_state.sidebar_state = 'expanded'
 
 # Mock disease detection function
 def detect_disease(image):
@@ -918,6 +961,7 @@ def login_page():
                         st.session_state.current_user = username
                         st.session_state.user_id = user_data['id']
                         st.success("🎉 Welcome back! Login successful!")
+                        time.sleep(1)
                         st.rerun()
                     else:
                         st.error("❌ Invalid username or password!")
@@ -950,6 +994,7 @@ def login_page():
                     if new_password == confirm_password:
                         if register_user(new_username, new_password, full_name, farm_location, farm_size):
                             st.success("🎉 Account created successfully! Please login with your credentials.")
+                            time.sleep(2)
                         else:
                             st.error("❌ Username already exists or registration failed!")
                     else:
@@ -1051,6 +1096,7 @@ def profile_page():
         if st.form_submit_button("💾 Update Profile", use_container_width=True):
             if update_user_profile(st.session_state.user_id, new_name, new_location, new_farm_size):
                 st.success("✅ Profile updated successfully!")
+                time.sleep(1)
                 st.rerun()
             else:
                 st.error("❌ Failed to update profile!")
@@ -1250,9 +1296,9 @@ def analytics_page():
     timeline_data = scan_history.groupby(scan_history['scan_date'].dt.date).size()
     st.line_chart(timeline_data)
 
-# Sidebar navigation
+# Enhanced sidebar navigation with better state management
 def sidebar():
-    """Create sidebar navigation"""
+    """Create sidebar navigation with improved state management"""
     with st.sidebar:
         st.markdown("""
         <div style="text-align: center; padding: 20px; border-bottom: 2px solid rgba(34, 197, 94, 0.2); margin-bottom: 20px;">
@@ -1270,33 +1316,40 @@ def sidebar():
             </div>
             """, unsafe_allow_html=True)
             
-            # Navigation menu with better state management
-            menu_options = {
+            # Navigation menu with improved state handling
+            st.markdown("### 🧭 Navigation")
+            
+            # Use radio buttons for better state management
+            page_options = ["🏠 Home", "📸 Disease Scanner", "👤 Profile", "📊 Analytics"]
+            
+            # Find current index
+            current_index = 0
+            page_mapping = {
                 "🏠 Home": "Home",
-                "📸 Disease Scanner": "Disease Scanner", 
-                "👤 Profile": "Profile",
+                "📸 Disease Scanner": "Disease Scanner",
+                "👤 Profile": "Profile", 
                 "📊 Analytics": "Analytics"
             }
             
-            # Find current selection based on current page
-            current_selection = "🏠 Home"  # default
-            for key, value in menu_options.items():
-                if value == st.session_state.page:
-                    current_selection = key
+            for i, option in enumerate(page_options):
+                if page_mapping[option] == st.session_state.get('page', 'Home'):
+                    current_index = i
                     break
             
-            selected = st.selectbox("🧭 Navigate to:", list(menu_options.keys()), 
-                                  index=list(menu_options.keys()).index(current_selection))
+            selected_option = st.radio("", page_options, index=current_index, label_visibility="collapsed")
             
-            # Only change page if selection is different
-            if menu_options[selected] != st.session_state.page:
-                st.session_state.page = menu_options[selected]
+            # Update page if selection changed
+            new_page = page_mapping[selected_option]
+            if new_page != st.session_state.get('page', 'Home'):
+                st.session_state.page = new_page
                 st.rerun()
             
             st.markdown("---")
             
             # Quick stats with improved styling
             profile = st.session_state.user_profile
+            
+            st.markdown("### 📈 Quick Stats")
             
             st.markdown("""
             <div class="sidebar-metric">
@@ -1312,13 +1365,27 @@ def sidebar():
             </div>
             """.format(profile.get('diseases_detected', 0)), unsafe_allow_html=True)
             
+            # Farm info
+            if profile.get('farm_location') or profile.get('farm_size'):
+                st.markdown("### 🚜 Farm Info")
+                if profile.get('farm_location'):
+                    st.markdown(f"**📍 Location:** {profile.get('farm_location')}")
+                if profile.get('farm_size'):
+                    st.markdown(f"**📏 Size:** {profile.get('farm_size')} acres")
+            
             st.markdown("---")
             
-            # Logout button
-            if st.button("🚪 Logout", use_container_width=True):
+            # Logout button with confirmation
+            if st.button("🚪 Logout", use_container_width=True, help="Sign out of your account"):
                 st.session_state.logged_in = False
                 st.session_state.user_profile = {}
                 st.session_state.page = "Home"
+                if 'user_id' in st.session_state:
+                    del st.session_state.user_id
+                if 'current_user' in st.session_state:
+                    del st.session_state.current_user
+                st.success("👋 Successfully logged out!")
+                time.sleep(1)
                 st.rerun()
         else:
             # Login prompt with better styling
@@ -1330,35 +1397,123 @@ def sidebar():
             </div>
             """, unsafe_allow_html=True)
             
-            if st.button("🌱 Login / Register", use_container_width=True):
+            if st.button("🌱 Login / Register", use_container_width=True, help="Sign in to access all features"):
                 st.session_state.page = "Login"
                 st.rerun()
+            
+            # Demo info for non-logged-in users
+            st.markdown("---")
+            st.markdown("### 🌟 Features Available")
+            
+            features = [
+                "🔍 AI Disease Detection",
+                "📊 Detailed Analytics", 
+                "👤 Personal Profile",
+                "📈 Scan History",
+                "💊 Treatment Plans",
+                "🦠 Disease Database"
+            ]
+            
+            for feature in features:
+                st.markdown(f"• {feature}")
 
-# Main application logic
+# Main application logic with better error handling
 def main():
-    """Main application function"""
-    # Initialize page state
-    if 'page' not in st.session_state:
-        st.session_state.page = "Home"
+    """Main application function with enhanced error handling"""
+    try:
+        # Initialize page state
+        if 'page' not in st.session_state:
+            st.session_state.page = "Home"
+        
+        # Initialize database
+        initialize_database_once()
+        
+        # Create sidebar
+        sidebar()
+        
+        # Add a sidebar state persistence mechanism
+        if 'sidebar_visible' not in st.session_state:
+            st.session_state.sidebar_visible = True
+        
+        # Route to appropriate page with error handling
+        try:
+            if st.session_state.page == "Home":
+                home_page()
+            elif st.session_state.page == "Login":
+                login_page()
+            elif st.session_state.page == "Profile":
+                profile_page()
+            elif st.session_state.page == "Disease Scanner":
+                disease_scanner_page()
+            elif st.session_state.page == "Analytics":
+                analytics_page()
+            else:
+                # Fallback to home if unknown page
+                st.session_state.page = "Home"
+                home_page()
+                
+        except Exception as e:
+            st.error(f"❌ An error occurred while loading the page: {str(e)}")
+            st.info("🔄 Please refresh the page or try again.")
+            
+            # Reset to home page on error
+            if st.button("🏠 Return to Home"):
+                st.session_state.page = "Home"
+                st.rerun()
     
-    # Initialize database
-    initialize_database_once()
+    except Exception as e:
+        st.error("❌ Critical application error occurred.")
+        st.info("Please refresh the page to restart the application.")
+        
+        # Show technical details in expander for debugging
+        with st.expander("🔧 Technical Details"):
+            st.code(str(e))
+
+# Add JavaScript for sidebar persistence (optional enhancement)
+def add_sidebar_persistence():
+    """Add JavaScript to maintain sidebar state"""
+    st.markdown("""
+    <script>
+    // Prevent sidebar from permanently collapsing
+    function maintainSidebarState() {
+        const sidebar = document.querySelector('[data-testid="stSidebar"]');
+        if (sidebar) {
+            // Add event listener to sidebar toggle
+            const toggleBtn = document.querySelector('[data-testid="collapsedControl"]');
+            if (toggleBtn) {
+                toggleBtn.addEventListener('click', function() {
+                    // Store sidebar state
+                    localStorage.setItem('sidebarState', sidebar.style.display === 'none' ? 'collapsed' : 'expanded');
+                });
+            }
+            
+            // Restore sidebar state
+            const savedState = localStorage.getItem('sidebarState');
+            if (savedState === 'expanded') {
+                sidebar.style.display = 'block';
+            }
+        }
+    }
     
-    # Create sidebar
-    sidebar()
+    // Run on page load
+    document.addEventListener('DOMContentLoaded', maintainSidebarState);
     
-    # Route to appropriate page
-    if st.session_state.page == "Home":
-        home_page()
-    elif st.session_state.page == "Login":
-        login_page()
-    elif st.session_state.page == "Profile":
-        profile_page()
-    elif st.session_state.page == "Disease Scanner":
-        disease_scanner_page()
-    elif st.session_state.page == "Analytics":
-        analytics_page()
+    // Also run after a short delay to catch dynamic content
+    setTimeout(maintainSidebarState, 1000);
+    </script>
+    """, unsafe_allow_html=True)
 
 # Run the application
 if __name__ == "__main__":
-    main()
+    try:
+        # Add sidebar persistence enhancement
+        add_sidebar_persistence()
+        
+        # Run main application
+        main()
+        
+    except KeyboardInterrupt:
+        st.info("👋 Application stopped by user.")
+    except Exception as e:
+        st.error(f"🚨 Fatal error: {str(e)}")
+        st.info("Please restart the application.")
