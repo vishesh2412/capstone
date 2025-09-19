@@ -32,6 +32,8 @@ st.set_page_config(
 )
 
 # Custom CSS for modern black & green UI with permanent sidebar
+# Replace the entire st.markdown CSS block (around line 52) with this complete version:
+
 st.markdown("""
 <style>
     /* Import Google Fonts */
@@ -475,77 +477,93 @@ st.markdown("""
         border-color: #22c55e;
         color: white;
     }
-            
-            /* Slideshow container and animations */
-.slideshow-container {
-    position: relative;
-    max-width: 100%;
-    margin: auto;
-    overflow: hidden;
-}
-
-.slide {
-    display: none;
-    animation: slideIn 0.8s ease-in-out;
-}
-
-.slide.active {
-    display: block;
-}
-
-@keyframes slideIn {
-    from {
-        opacity: 0;
-        transform: translateX(50px);
+    
+    /* Slideshow container and animations */
+    .slideshow-container {
+        position: relative;
+        max-width: 100%;
+        margin: auto;
+        overflow: hidden;
     }
-    to {
-        opacity: 1;
-        transform: translateX(0);
+
+    .slide {
+        display: none;
+        animation: slideIn 0.8s ease-in-out;
     }
-}
 
-@keyframes slideOut {
-    from {
-        opacity: 1;
-        transform: translateX(0);
+    .slide.active {
+        display: block;
     }
-    to {
-        opacity: 0;
-        transform: translateX(-50px);
+
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateX(50px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
     }
-}
 
-.slide-indicators {
-    text-align: center;
-    margin-top: 20px;
-}
+    @keyframes slideOut {
+        from {
+            opacity: 1;
+            transform: translateX(0);
+        }
+        to {
+            opacity: 0;
+            transform: translateX(-50px);
+        }
+    }
 
-.indicator {
-    height: 12px;
-    width: 12px;
-    margin: 0 8px;
-    background-color: rgba(255, 255, 255, 0.3);
-    border-radius: 50%;
-    display: inline-block;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
+    .slide-indicators {
+        text-align: center;
+        margin-top: 20px;
+    }
 
-.indicator.active {
-    background-color: #22c55e;
-    transform: scale(1.2);
-    box-shadow: 0 0 10px rgba(34, 197, 94, 0.5);
-}
+    .indicator {
+        height: 12px;
+        width: 12px;
+        margin: 0 8px;
+        background-color: rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        display: inline-block;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
 
-.indicator:hover {
-    background-color: rgba(34, 197, 94, 0.7);
-}
+    .indicator.active {
+        background-color: #22c55e;
+        transform: scale(1.2);
+        box-shadow: 0 0 10px rgba(34, 197, 94, 0.5);
+    }
+
+    .indicator:hover {
+        background-color: rgba(34, 197, 94, 0.7);
+    }
 </style>
-            
-            <script>
+
+<script>
 let currentSlide = 0;
-const slides = document.querySelectorAll('.slide');
-const indicators = document.querySelectorAll('.indicator');
+const slides = [];
+const indicators = [];
+
+function initSlideshow() {
+    // Get elements after they're rendered
+    const slideElements = document.querySelectorAll('.slide');
+    const indicatorElements = document.querySelectorAll('.indicator');
+    
+    slides.length = 0;
+    indicators.length = 0;
+    
+    slideElements.forEach(slide => slides.push(slide));
+    indicatorElements.forEach(indicator => indicators.push(indicator));
+    
+    if (slides.length > 0) {
+        showSlide(0);
+    }
+}
 
 function showSlide(index) {
     slides.forEach((slide, i) => {
@@ -566,15 +584,18 @@ function goToSlide(index) {
     showSlide(currentSlide);
 }
 
-// Auto-advance slides every 4 seconds
-setInterval(nextSlide, 4000);
+// Initialize slideshow when page loads
+document.addEventListener('DOMContentLoaded', initSlideshow);
 
-// Initialize first slide
-document.addEventListener('DOMContentLoaded', function() {
+// Also try to initialize after a short delay (for Streamlit's dynamic loading)
+setTimeout(initSlideshow, 500);
+
+// Auto-advance slides every 4 seconds
+setInterval(() => {
     if (slides.length > 0) {
-        showSlide(0);
+        nextSlide();
     }
-});
+}, 4000);
 </script>
 """, unsafe_allow_html=True)
 
@@ -1215,7 +1236,7 @@ def home_page():
                 st.session_state.user_profile = {}
                 st.session_state.page = "Home"
                 st.rerun()
-                
+
 def login_page():
     """Login and registration page"""
     st.markdown('<h1 class="main-header">🔐 Access Your Account</h1>', unsafe_allow_html=True)
