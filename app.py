@@ -1063,63 +1063,101 @@ if 'user_profile' not in st.session_state:
     st.session_state.user_profile = {}
 
 def home_page():
-    """Home page with attractive landing"""
+    """Home page with attractive landing and working slideshow"""
     st.markdown('<div class="slide-in-up">', unsafe_allow_html=True)
     st.markdown('<h1 class="main-header">🌾 LIRA Pro</h1>', unsafe_allow_html=True)
     st.markdown('<p class="sub-header">Sugarcane Disease Detection System</p>', unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
     
-    # Feature slideshow
-    st.markdown("""
+    # Initialize slideshow state
+    if 'slide_index' not in st.session_state:
+        st.session_state.slide_index = 0
+    if 'last_slide_time' not in st.session_state:
+        st.session_state.last_slide_time = time.time()
+    
+    # Auto-advance slides every 4 seconds
+    current_time = time.time()
+    if current_time - st.session_state.last_slide_time > 4:
+        st.session_state.slide_index = (st.session_state.slide_index + 1) % 3
+        st.session_state.last_slide_time = current_time
+        st.rerun()
+    
+    # Feature slides content
+    slides = [
+        {
+            "icon": "🔍",
+            "title": "Smart Detection",
+            "description": "Advanced CNN models trained on comprehensive sugarcane leaf datasets for accurate disease identification with 95%+ accuracy",
+            "features": "🎯 Real-time Analysis • 🧠 Deep Learning • 📊 95%+ Accuracy"
+        },
+        {
+            "icon": "📊", 
+            "title": "Severity Analysis",
+            "description": "Horsfall-Barratt scale integration for precise disease severity assessment and progression monitoring in real-time",
+            "features": "📈 Scale Integration • ⏱️ Real-time • 🎯 Precision Monitoring"
+        },
+        {
+            "icon": "💡",
+            "title": "Smart Advisory", 
+            "description": "Personalized treatment recommendations and crop management insights powered by machine learning algorithms",
+            "features": "🤖 ML Powered • 📋 Personalized • 🌱 Crop Management"
+        }
+    ]
+    
+    current_slide = slides[st.session_state.slide_index]
+    
+    # Display current slide with animation
+    st.markdown(f"""
     <div class="slideshow-container">
         <div class="slide active">
             <div class="custom-card fade-in-scale">
                 <div style="text-align: center;">
-                    <div style="font-size: 4rem; margin-bottom: 20px;">🔍</div>
-                    <h3>Smart Detection</h3>
-                    <p>Advanced CNN models trained on comprehensive sugarcane leaf datasets for accurate disease identification with 95%+ accuracy</p>
+                    <div style="font-size: 4rem; margin-bottom: 20px;">{current_slide['icon']}</div>
+                    <h3>{current_slide['title']}</h3>
+                    <p>{current_slide['description']}</p>
                     <div style="margin-top: 20px; padding: 15px; background: rgba(34, 197, 94, 0.1); border-radius: 10px;">
-                        <small style="color: #4ade80;">🎯 Real-time Analysis • 🧠 Deep Learning • 📊 95%+ Accuracy</small>
+                        <small style="color: #4ade80;">{current_slide['features']}</small>
                     </div>
                 </div>
             </div>
-        </div>
-        
-        <div class="slide">
-            <div class="custom-card fade-in-scale">
-                <div style="text-align: center;">
-                    <div style="font-size: 4rem; margin-bottom: 20px;">📊</div>
-                    <h3>Severity Analysis</h3>
-                    <p>Horsfall-Barratt scale integration for precise disease severity assessment and progression monitoring in real-time</p>
-                    <div style="margin-top: 20px; padding: 15px; background: rgba(34, 197, 94, 0.1); border-radius: 10px;">
-                        <small style="color: #4ade80;">📈 Scale Integration • ⏱️ Real-time • 🎯 Precision Monitoring</small>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="slide">
-            <div class="custom-card fade-in-scale">
-                <div style="text-align: center;">
-                    <div style="font-size: 4rem; margin-bottom: 20px;">💡</div>
-                    <h3>Smart Advisory</h3>
-                    <p>Personalized treatment recommendations and crop management insights powered by machine learning algorithms</p>
-                    <div style="margin-top: 20px; padding: 15px; background: rgba(34, 197, 94, 0.1); border-radius: 10px;">
-                        <small style="color: #4ade80;">🤖 ML Powered • 📋 Personalized • 🌱 Crop Management</small>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="slide-indicators">
-            <span class="indicator active" onclick="goToSlide(0)"></span>
-            <span class="indicator" onclick="goToSlide(1)"></span>
-            <span class="indicator" onclick="goToSlide(2)"></span>
         </div>
     </div>
     """, unsafe_allow_html=True)
     
-    # Rest of the function remains the same...
+    # Manual navigation indicators
+    st.markdown('<div style="text-align: center; margin-top: 20px;">', unsafe_allow_html=True)
+    
+    col1, col2, col3, col4, col5 = st.columns([2, 1, 1, 1, 2])
+    
+    with col2:
+        if st.button("●" if st.session_state.slide_index == 0 else "○", 
+                    key="slide_0", 
+                    help="Smart Detection"):
+            st.session_state.slide_index = 0
+            st.session_state.last_slide_time = time.time()
+            st.rerun()
+    
+    with col3:
+        if st.button("●" if st.session_state.slide_index == 1 else "○", 
+                    key="slide_1", 
+                    help="Severity Analysis"):
+            st.session_state.slide_index = 1
+            st.session_state.last_slide_time = time.time()
+            st.rerun()
+    
+    with col4:
+        if st.button("●" if st.session_state.slide_index == 2 else "○", 
+                    key="slide_2", 
+                    help="Smart Advisory"):
+            st.session_state.slide_index = 2
+            st.session_state.last_slide_time = time.time()
+            st.rerun()
+    
+    st.markdown('</div>', unsafe_allow_html=True)
+    
+    # Auto-refresh for slideshow (subtle)
+    time.sleep(0.1)
+    
     # Statistics section
     st.markdown("---")
     
