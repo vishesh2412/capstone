@@ -34,6 +34,8 @@ st.set_page_config(
 # Custom CSS for modern black & green UI with permanent sidebar
 # Replace the entire st.markdown CSS block (around line 52) with this complete version:
 
+# Replace your entire CSS st.markdown block with this (REMOVE the JavaScript section entirely):
+
 st.markdown("""
 <style>
     /* Import Google Fonts */
@@ -487,7 +489,7 @@ st.markdown("""
     }
 
     .slide {
-        display: none;
+        display: block;
         animation: slideIn 0.8s ease-in-out;
     }
 
@@ -516,87 +518,38 @@ st.markdown("""
             transform: translateX(-50px);
         }
     }
-
-    .slide-indicators {
-        text-align: center;
-        margin-top: 20px;
+    
+    /* Slideshow indicator buttons styling */
+    button[data-testid="baseButton-secondary"] {
+        background: rgba(255, 255, 255, 0.3) !important;
+        border: 2px solid rgba(34, 197, 94, 0.3) !important;
+        border-radius: 50% !important;
+        width: 40px !important;
+        height: 40px !important;
+        min-width: 40px !important;
+        min-height: 40px !important;
+        padding: 0 !important;
+        color: #22c55e !important;
+        font-size: 16px !important;
+        transition: all 0.3s ease !important;
+        margin: 5px !important;
     }
 
-    .indicator {
-        height: 12px;
-        width: 12px;
-        margin: 0 8px;
-        background-color: rgba(255, 255, 255, 0.3);
-        border-radius: 50%;
-        display: inline-block;
-        cursor: pointer;
-        transition: all 0.3s ease;
+    button[data-testid="baseButton-secondary"]:hover {
+        background: rgba(34, 197, 94, 0.7) !important;
+        transform: scale(1.1) !important;
+        box-shadow: 0 0 10px rgba(34, 197, 94, 0.5) !important;
+        border-color: #22c55e !important;
     }
 
-    .indicator.active {
-        background-color: #22c55e;
-        transform: scale(1.2);
-        box-shadow: 0 0 10px rgba(34, 197, 94, 0.5);
-    }
-
-    .indicator:hover {
-        background-color: rgba(34, 197, 94, 0.7);
+    /* Active slide indicator - when button shows filled circle */
+    button[data-testid="baseButton-secondary"]:focus {
+        background: #22c55e !important;
+        box-shadow: 0 0 15px rgba(34, 197, 94, 0.8) !important;
+        transform: scale(1.2) !important;
+        border-color: #4ade80 !important;
     }
 </style>
-
-<script>
-let currentSlide = 0;
-const slides = [];
-const indicators = [];
-
-function initSlideshow() {
-    // Get elements after they're rendered
-    const slideElements = document.querySelectorAll('.slide');
-    const indicatorElements = document.querySelectorAll('.indicator');
-    
-    slides.length = 0;
-    indicators.length = 0;
-    
-    slideElements.forEach(slide => slides.push(slide));
-    indicatorElements.forEach(indicator => indicators.push(indicator));
-    
-    if (slides.length > 0) {
-        showSlide(0);
-    }
-}
-
-function showSlide(index) {
-    slides.forEach((slide, i) => {
-        slide.classList.toggle('active', i === index);
-    });
-    indicators.forEach((indicator, i) => {
-        indicator.classList.toggle('active', i === index);
-    });
-}
-
-function nextSlide() {
-    currentSlide = (currentSlide + 1) % slides.length;
-    showSlide(currentSlide);
-}
-
-function goToSlide(index) {
-    currentSlide = index;
-    showSlide(currentSlide);
-}
-
-// Initialize slideshow when page loads
-document.addEventListener('DOMContentLoaded', initSlideshow);
-
-// Also try to initialize after a short delay (for Streamlit's dynamic loading)
-setTimeout(initSlideshow, 500);
-
-// Auto-advance slides every 4 seconds
-setInterval(() => {
-    if (slides.length > 0) {
-        nextSlide();
-    }
-}, 4000);
-</script>
 """, unsafe_allow_html=True)
 
 # Model Configuration
