@@ -36,6 +36,8 @@ st.set_page_config(
 
 # Replace your entire CSS st.markdown block with this (REMOVE the JavaScript section entirely):
 
+# Replace your CSS block with this simplified version (no button indicator styles needed):
+
 st.markdown("""
 <style>
     /* Import Google Fonts */
@@ -518,39 +520,9 @@ st.markdown("""
             transform: translateX(-50px);
         }
     }
-    
-    /* Slideshow indicator buttons styling */
-    button[data-testid="baseButton-secondary"] {
-        background: rgba(255, 255, 255, 0.3) !important;
-        border: 2px solid rgba(34, 197, 94, 0.3) !important;
-        border-radius: 50% !important;
-        width: 40px !important;
-        height: 40px !important;
-        min-width: 40px !important;
-        min-height: 40px !important;
-        padding: 0 !important;
-        color: #22c55e !important;
-        font-size: 16px !important;
-        transition: all 0.3s ease !important;
-        margin: 5px !important;
-    }
-
-    button[data-testid="baseButton-secondary"]:hover {
-        background: rgba(34, 197, 94, 0.7) !important;
-        transform: scale(1.1) !important;
-        box-shadow: 0 0 10px rgba(34, 197, 94, 0.5) !important;
-        border-color: #22c55e !important;
-    }
-
-    /* Active slide indicator - when button shows filled circle */
-    button[data-testid="baseButton-secondary"]:focus {
-        background: #22c55e !important;
-        box-shadow: 0 0 15px rgba(34, 197, 94, 0.8) !important;
-        transform: scale(1.2) !important;
-        border-color: #4ade80 !important;
-    }
 </style>
 """, unsafe_allow_html=True)
+
 
 # Model Configuration
 MODEL_PATH = "./models/sugarcane_effnetv2B2_7class.keras"
