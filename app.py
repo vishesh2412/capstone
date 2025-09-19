@@ -475,7 +475,107 @@ st.markdown("""
         border-color: #22c55e;
         color: white;
     }
+            
+            /* Slideshow container and animations */
+.slideshow-container {
+    position: relative;
+    max-width: 100%;
+    margin: auto;
+    overflow: hidden;
+}
+
+.slide {
+    display: none;
+    animation: slideIn 0.8s ease-in-out;
+}
+
+.slide.active {
+    display: block;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateX(50px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes slideOut {
+    from {
+        opacity: 1;
+        transform: translateX(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateX(-50px);
+    }
+}
+
+.slide-indicators {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.indicator {
+    height: 12px;
+    width: 12px;
+    margin: 0 8px;
+    background-color: rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    display: inline-block;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.indicator.active {
+    background-color: #22c55e;
+    transform: scale(1.2);
+    box-shadow: 0 0 10px rgba(34, 197, 94, 0.5);
+}
+
+.indicator:hover {
+    background-color: rgba(34, 197, 94, 0.7);
+}
 </style>
+            
+            <script>
+let currentSlide = 0;
+const slides = document.querySelectorAll('.slide');
+const indicators = document.querySelectorAll('.indicator');
+
+function showSlide(index) {
+    slides.forEach((slide, i) => {
+        slide.classList.toggle('active', i === index);
+    });
+    indicators.forEach((indicator, i) => {
+        indicator.classList.toggle('active', i === index);
+    });
+}
+
+function nextSlide() {
+    currentSlide = (currentSlide + 1) % slides.length;
+    showSlide(currentSlide);
+}
+
+function goToSlide(index) {
+    currentSlide = index;
+    showSlide(currentSlide);
+}
+
+// Auto-advance slides every 4 seconds
+setInterval(nextSlide, 4000);
+
+// Initialize first slide
+document.addEventListener('DOMContentLoaded', function() {
+    if (slides.length > 0) {
+        showSlide(0);
+    }
+});
+</script>
 """, unsafe_allow_html=True)
 
 # Model Configuration
@@ -948,33 +1048,57 @@ def home_page():
     st.markdown('<p class="sub-header">Sugarcane Disease Detection System</p>', unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
     
-    # Feature cards in columns
-    col1, col2, col3 = st.columns(3)
-    
-    with col1:
-        st.markdown("""
-        <div class="custom-card fade-in-scale">
-            <h3>🔍 Smart Detection</h3>
-            <p>Advanced CNN models trained on comprehensive sugarcane leaf datasets for accurate disease identification with 95%+ accuracy</p>
+    # Feature slideshow
+    st.markdown("""
+    <div class="slideshow-container">
+        <div class="slide active">
+            <div class="custom-card fade-in-scale">
+                <div style="text-align: center;">
+                    <div style="font-size: 4rem; margin-bottom: 20px;">🔍</div>
+                    <h3>Smart Detection</h3>
+                    <p>Advanced CNN models trained on comprehensive sugarcane leaf datasets for accurate disease identification with 95%+ accuracy</p>
+                    <div style="margin-top: 20px; padding: 15px; background: rgba(34, 197, 94, 0.1); border-radius: 10px;">
+                        <small style="color: #4ade80;">🎯 Real-time Analysis • 🧠 Deep Learning • 📊 95%+ Accuracy</small>
+                    </div>
+                </div>
+            </div>
         </div>
-        """, unsafe_allow_html=True)
-    
-    with col2:
-        st.markdown("""
-        <div class="custom-card fade-in-scale">
-            <h3>📊 Severity Analysis</h3>
-            <p>Horsfall-Barratt scale integration for precise disease severity assessment and progression monitoring in real-time</p>
+        
+        <div class="slide">
+            <div class="custom-card fade-in-scale">
+                <div style="text-align: center;">
+                    <div style="font-size: 4rem; margin-bottom: 20px;">📊</div>
+                    <h3>Severity Analysis</h3>
+                    <p>Horsfall-Barratt scale integration for precise disease severity assessment and progression monitoring in real-time</p>
+                    <div style="margin-top: 20px; padding: 15px; background: rgba(34, 197, 94, 0.1); border-radius: 10px;">
+                        <small style="color: #4ade80;">📈 Scale Integration • ⏱️ Real-time • 🎯 Precision Monitoring</small>
+                    </div>
+                </div>
+            </div>
         </div>
-        """, unsafe_allow_html=True)
-    
-    with col3:
-        st.markdown("""
-        <div class="custom-card fade-in-scale">
-            <h3>💡 Smart Advisory</h3>
-            <p>Personalized treatment recommendations and crop management insights powered by machine learning algorithms</p>
+        
+        <div class="slide">
+            <div class="custom-card fade-in-scale">
+                <div style="text-align: center;">
+                    <div style="font-size: 4rem; margin-bottom: 20px;">💡</div>
+                    <h3>Smart Advisory</h3>
+                    <p>Personalized treatment recommendations and crop management insights powered by machine learning algorithms</p>
+                    <div style="margin-top: 20px; padding: 15px; background: rgba(34, 197, 94, 0.1); border-radius: 10px;">
+                        <small style="color: #4ade80;">🤖 ML Powered • 📋 Personalized • 🌱 Crop Management</small>
+                    </div>
+                </div>
+            </div>
         </div>
-        """, unsafe_allow_html=True)
+        
+        <div class="slide-indicators">
+            <span class="indicator active" onclick="goToSlide(0)"></span>
+            <span class="indicator" onclick="goToSlide(1)"></span>
+            <span class="indicator" onclick="goToSlide(2)"></span>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
     
+    # Rest of the function remains the same...
     # Statistics section
     st.markdown("---")
     
@@ -1091,7 +1215,7 @@ def home_page():
                 st.session_state.user_profile = {}
                 st.session_state.page = "Home"
                 st.rerun()
-
+                
 def login_page():
     """Login and registration page"""
     st.markdown('<h1 class="main-header">🔐 Access Your Account</h1>', unsafe_allow_html=True)
