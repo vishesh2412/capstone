@@ -34,10 +34,6 @@ st.set_page_config(
 # Custom CSS for modern black & green UI with permanent sidebar
 # Replace the entire st.markdown CSS block (around line 52) with this complete version:
 
-# Replace your entire CSS st.markdown block with this (REMOVE the JavaScript section entirely):
-
-# Replace your CSS block with this simplified version (no button indicator styles needed):
-
 st.markdown("""
 <style>
     /* Import Google Fonts */
@@ -491,7 +487,7 @@ st.markdown("""
     }
 
     .slide {
-        display: block;
+        display: none;
         animation: slideIn 0.8s ease-in-out;
     }
 
@@ -520,9 +516,88 @@ st.markdown("""
             transform: translateX(-50px);
         }
     }
-</style>
-""", unsafe_allow_html=True)
 
+    .slide-indicators {
+        text-align: center;
+        margin-top: 20px;
+    }
+
+    .indicator {
+        height: 12px;
+        width: 12px;
+        margin: 0 8px;
+        background-color: rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        display: inline-block;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .indicator.active {
+        background-color: #22c55e;
+        transform: scale(1.2);
+        box-shadow: 0 0 10px rgba(34, 197, 94, 0.5);
+    }
+
+    .indicator:hover {
+        background-color: rgba(34, 197, 94, 0.7);
+    }
+</style>
+
+<script>
+let currentSlide = 0;
+const slides = [];
+const indicators = [];
+
+function initSlideshow() {
+    // Get elements after they're rendered
+    const slideElements = document.querySelectorAll('.slide');
+    const indicatorElements = document.querySelectorAll('.indicator');
+    
+    slides.length = 0;
+    indicators.length = 0;
+    
+    slideElements.forEach(slide => slides.push(slide));
+    indicatorElements.forEach(indicator => indicators.push(indicator));
+    
+    if (slides.length > 0) {
+        showSlide(0);
+    }
+}
+
+function showSlide(index) {
+    slides.forEach((slide, i) => {
+        slide.classList.toggle('active', i === index);
+    });
+    indicators.forEach((indicator, i) => {
+        indicator.classList.toggle('active', i === index);
+    });
+}
+
+function nextSlide() {
+    currentSlide = (currentSlide + 1) % slides.length;
+    showSlide(currentSlide);
+}
+
+function goToSlide(index) {
+    currentSlide = index;
+    showSlide(currentSlide);
+}
+
+// Initialize slideshow when page loads
+document.addEventListener('DOMContentLoaded', initSlideshow);
+
+// Also try to initialize after a short delay (for Streamlit's dynamic loading)
+setTimeout(initSlideshow, 500);
+
+// Auto-advance slides every 4 seconds
+setInterval(() => {
+    if (slides.length > 0) {
+        nextSlide();
+    }
+}, 4000);
+</script>
+""", unsafe_allow_html=True)
 
 # Model Configuration
 MODEL_PATH = "./models/sugarcane_effnetv2B2_7class.keras"
@@ -988,7 +1063,7 @@ if 'user_profile' not in st.session_state:
     st.session_state.user_profile = {}
 
 def home_page():
-    """Home page with auto-only slideshow - no manual controls"""
+    """Home page with attractive landing and working slideshow"""
     st.markdown('<div class="slide-in-up">', unsafe_allow_html=True)
     st.markdown('<h1 class="main-header">🌾 LIRA Pro</h1>', unsafe_allow_html=True)
     st.markdown('<p class="sub-header">Sugarcane Disease Detection System</p>', unsafe_allow_html=True)
@@ -1000,9 +1075,9 @@ def home_page():
     if 'last_slide_time' not in st.session_state:
         st.session_state.last_slide_time = time.time()
     
-    # Auto-advance slides every 3 seconds
+    # Auto-advance slides every 4 seconds
     current_time = time.time()
-    if current_time - st.session_state.last_slide_time > 3:
+    if current_time - st.session_state.last_slide_time > 4:
         st.session_state.slide_index = (st.session_state.slide_index + 1) % 3
         st.session_state.last_slide_time = current_time
         st.rerun()
@@ -1031,7 +1106,7 @@ def home_page():
     
     current_slide = slides[st.session_state.slide_index]
     
-    # Display current slide with animation - NO MANUAL CONTROLS
+    # Display current slide with animation
     st.markdown(f"""
     <div class="slideshow-container">
         <div class="slide active">
@@ -1046,17 +1121,42 @@ def home_page():
                 </div>
             </div>
         </div>
-        
-        <div class="slide-indicators" style="margin-top: 20px; text-align: center;">
-            <span class="indicator {'active' if st.session_state.slide_index == 0 else ''}" style="height: 12px; width: 12px; margin: 0 8px; background-color: {'#22c55e' if st.session_state.slide_index == 0 else 'rgba(255, 255, 255, 0.3)'}; border-radius: 50%; display: inline-block; transition: all 0.3s ease; transform: {'scale(1.2)' if st.session_state.slide_index == 0 else 'scale(1)'}; box-shadow: {'0 0 10px rgba(34, 197, 94, 0.5)' if st.session_state.slide_index == 0 else 'none'};"></span>
-            <span class="indicator {'active' if st.session_state.slide_index == 1 else ''}" style="height: 12px; width: 12px; margin: 0 8px; background-color: {'#22c55e' if st.session_state.slide_index == 1 else 'rgba(255, 255, 255, 0.3)'}; border-radius: 50%; display: inline-block; transition: all 0.3s ease; transform: {'scale(1.2)' if st.session_state.slide_index == 1 else 'scale(1)'}; box-shadow: {'0 0 10px rgba(34, 197, 94, 0.5)' if st.session_state.slide_index == 1 else 'none'};"></span>
-            <span class="indicator {'active' if st.session_state.slide_index == 2 else ''}" style="height: 12px; width: 12px; margin: 0 8px; background-color: {'#22c55e' if st.session_state.slide_index == 2 else 'rgba(255, 255, 255, 0.3)'}; border-radius: 50%; display: inline-block; transition: all 0.3s ease; transform: {'scale(1.2)' if st.session_state.slide_index == 2 else 'scale(1)'}; box-shadow: {'0 0 10px rgba(34, 197, 94, 0.5)' if st.session_state.slide_index == 2 else 'none'};"></span>
-        </div>
     </div>
     """, unsafe_allow_html=True)
     
-    # Small delay to trigger refresh for smooth auto-slideshow
-    time.sleep(0.05)
+    # Manual navigation indicators
+    st.markdown('<div style="text-align: center; margin-top: 20px;">', unsafe_allow_html=True)
+    
+    col1, col2, col3, col4, col5 = st.columns([2, 1, 1, 1, 2])
+    
+    with col2:
+        if st.button("●" if st.session_state.slide_index == 0 else "○", 
+                    key="slide_0", 
+                    help="Smart Detection"):
+            st.session_state.slide_index = 0
+            st.session_state.last_slide_time = time.time()
+            st.rerun()
+    
+    with col3:
+        if st.button("●" if st.session_state.slide_index == 1 else "○", 
+                    key="slide_1", 
+                    help="Severity Analysis"):
+            st.session_state.slide_index = 1
+            st.session_state.last_slide_time = time.time()
+            st.rerun()
+    
+    with col4:
+        if st.button("●" if st.session_state.slide_index == 2 else "○", 
+                    key="slide_2", 
+                    help="Smart Advisory"):
+            st.session_state.slide_index = 2
+            st.session_state.last_slide_time = time.time()
+            st.rerun()
+    
+    st.markdown('</div>', unsafe_allow_html=True)
+    
+    # Auto-refresh for slideshow (subtle)
+    time.sleep(0.1)
     
     # Statistics section
     st.markdown("---")
