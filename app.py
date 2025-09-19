@@ -1016,7 +1016,7 @@ if 'user_profile' not in st.session_state:
     st.session_state.user_profile = {}
 
 def home_page():
-    """Home page with pure auto-slideshow (no manual controls)"""
+    """Home page with auto-only slideshow - no manual controls"""
     st.markdown('<div class="slide-in-up">', unsafe_allow_html=True)
     st.markdown('<h1 class="main-header">🌾 LIRA Pro</h1>', unsafe_allow_html=True)
     st.markdown('<p class="sub-header">Sugarcane Disease Detection System</p>', unsafe_allow_html=True)
@@ -1059,7 +1059,7 @@ def home_page():
     
     current_slide = slides[st.session_state.slide_index]
     
-    # Display current slide with animation
+    # Display current slide with animation - NO MANUAL CONTROLS
     st.markdown(f"""
     <div class="slideshow-container">
         <div class="slide active">
@@ -1075,13 +1075,16 @@ def home_page():
             </div>
         </div>
         
-        <div class="slide-indicators-auto">
-            <span class="indicator-dot {'active' if st.session_state.slide_index == 0 else ''}"></span>
-            <span class="indicator-dot {'active' if st.session_state.slide_index == 1 else ''}"></span>
-            <span class="indicator-dot {'active' if st.session_state.slide_index == 2 else ''}"></span>
+        <div class="slide-indicators" style="margin-top: 20px; text-align: center;">
+            <span class="indicator {'active' if st.session_state.slide_index == 0 else ''}" style="height: 12px; width: 12px; margin: 0 8px; background-color: {'#22c55e' if st.session_state.slide_index == 0 else 'rgba(255, 255, 255, 0.3)'}; border-radius: 50%; display: inline-block; transition: all 0.3s ease; transform: {'scale(1.2)' if st.session_state.slide_index == 0 else 'scale(1)'}; box-shadow: {'0 0 10px rgba(34, 197, 94, 0.5)' if st.session_state.slide_index == 0 else 'none'};"></span>
+            <span class="indicator {'active' if st.session_state.slide_index == 1 else ''}" style="height: 12px; width: 12px; margin: 0 8px; background-color: {'#22c55e' if st.session_state.slide_index == 1 else 'rgba(255, 255, 255, 0.3)'}; border-radius: 50%; display: inline-block; transition: all 0.3s ease; transform: {'scale(1.2)' if st.session_state.slide_index == 1 else 'scale(1)'}; box-shadow: {'0 0 10px rgba(34, 197, 94, 0.5)' if st.session_state.slide_index == 1 else 'none'};"></span>
+            <span class="indicator {'active' if st.session_state.slide_index == 2 else ''}" style="height: 12px; width: 12px; margin: 0 8px; background-color: {'#22c55e' if st.session_state.slide_index == 2 else 'rgba(255, 255, 255, 0.3)'}; border-radius: 50%; display: inline-block; transition: all 0.3s ease; transform: {'scale(1.2)' if st.session_state.slide_index == 2 else 'scale(1)'}; box-shadow: {'0 0 10px rgba(34, 197, 94, 0.5)' if st.session_state.slide_index == 2 else 'none'};"></span>
         </div>
     </div>
     """, unsafe_allow_html=True)
+    
+    # Small delay to trigger refresh for smooth auto-slideshow
+    time.sleep(0.05)
     
     # Statistics section
     st.markdown("---")
@@ -1200,7 +1203,6 @@ def home_page():
                 st.session_state.page = "Home"
                 st.rerun()
 
-                
 def login_page():
     """Login and registration page"""
     st.markdown('<h1 class="main-header">🔐 Access Your Account</h1>', unsafe_allow_html=True)
