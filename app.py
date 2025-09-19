@@ -1016,7 +1016,7 @@ if 'user_profile' not in st.session_state:
     st.session_state.user_profile = {}
 
 def home_page():
-    """Home page with attractive landing and working slideshow"""
+    """Home page with pure auto-slideshow (no manual controls)"""
     st.markdown('<div class="slide-in-up">', unsafe_allow_html=True)
     st.markdown('<h1 class="main-header">🌾 LIRA Pro</h1>', unsafe_allow_html=True)
     st.markdown('<p class="sub-header">Sugarcane Disease Detection System</p>', unsafe_allow_html=True)
@@ -1028,9 +1028,9 @@ def home_page():
     if 'last_slide_time' not in st.session_state:
         st.session_state.last_slide_time = time.time()
     
-    # Auto-advance slides every 4 seconds
+    # Auto-advance slides every 3 seconds
     current_time = time.time()
-    if current_time - st.session_state.last_slide_time > 4:
+    if current_time - st.session_state.last_slide_time > 3:
         st.session_state.slide_index = (st.session_state.slide_index + 1) % 3
         st.session_state.last_slide_time = current_time
         st.rerun()
@@ -1074,42 +1074,14 @@ def home_page():
                 </div>
             </div>
         </div>
+        
+        <div class="slide-indicators-auto">
+            <span class="indicator-dot {'active' if st.session_state.slide_index == 0 else ''}"></span>
+            <span class="indicator-dot {'active' if st.session_state.slide_index == 1 else ''}"></span>
+            <span class="indicator-dot {'active' if st.session_state.slide_index == 2 else ''}"></span>
+        </div>
     </div>
     """, unsafe_allow_html=True)
-    
-    # Manual navigation indicators
-    st.markdown('<div style="text-align: center; margin-top: 20px;">', unsafe_allow_html=True)
-    
-    col1, col2, col3, col4, col5 = st.columns([2, 1, 1, 1, 2])
-    
-    with col2:
-        if st.button("●" if st.session_state.slide_index == 0 else "○", 
-                    key="slide_0", 
-                    help="Smart Detection"):
-            st.session_state.slide_index = 0
-            st.session_state.last_slide_time = time.time()
-            st.rerun()
-    
-    with col3:
-        if st.button("●" if st.session_state.slide_index == 1 else "○", 
-                    key="slide_1", 
-                    help="Severity Analysis"):
-            st.session_state.slide_index = 1
-            st.session_state.last_slide_time = time.time()
-            st.rerun()
-    
-    with col4:
-        if st.button("●" if st.session_state.slide_index == 2 else "○", 
-                    key="slide_2", 
-                    help="Smart Advisory"):
-            st.session_state.slide_index = 2
-            st.session_state.last_slide_time = time.time()
-            st.rerun()
-    
-    st.markdown('</div>', unsafe_allow_html=True)
-    
-    # Auto-refresh for slideshow (subtle)
-    time.sleep(0.1)
     
     # Statistics section
     st.markdown("---")
@@ -1228,6 +1200,7 @@ def home_page():
                 st.session_state.page = "Home"
                 st.rerun()
 
+                
 def login_page():
     """Login and registration page"""
     st.markdown('<h1 class="main-header">🔐 Access Your Account</h1>', unsafe_allow_html=True)
