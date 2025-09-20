@@ -478,45 +478,79 @@ st.markdown("""
         color: white;
     }
     
-    /* Slideshow container and animations */
+    /* ENHANCED SLIDESHOW CONTAINER AND ANIMATIONS */
     .slideshow-container {
         position: relative;
         max-width: 100%;
         margin: auto;
         overflow: hidden;
+        min-height: 300px;
     }
 
     .slide {
         display: none;
-        animation: slideIn 0.8s ease-in-out;
+        opacity: 0;
+        transform: translateX(50px);
+        transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        animation: slideInFromRight 0.8s ease-in-out;
     }
 
     .slide.active {
         display: block;
+        opacity: 1;
+        transform: translateX(0);
+        animation: slideInFromRight 0.8s ease-in-out;
     }
 
-    @keyframes slideIn {
-        from {
+    /* Enhanced slide animations */
+    @keyframes slideInFromRight {
+        0% {
             opacity: 0;
-            transform: translateX(50px);
+            transform: translateX(100px) scale(0.9);
         }
-        to {
+        50% {
+            opacity: 0.5;
+            transform: translateX(20px) scale(0.95);
+        }
+        100% {
             opacity: 1;
-            transform: translateX(0);
+            transform: translateX(0) scale(1);
         }
     }
 
-    @keyframes slideOut {
-        from {
-            opacity: 1;
-            transform: translateX(0);
-        }
-        to {
+    @keyframes slideInFromLeft {
+        0% {
             opacity: 0;
-            transform: translateX(-50px);
+            transform: translateX(-100px) scale(0.9);
+        }
+        50% {
+            opacity: 0.5;
+            transform: translateX(-20px) scale(0.95);
+        }
+        100% {
+            opacity: 1;
+            transform: translateX(0) scale(1);
         }
     }
 
+    @keyframes fadeSlideIn {
+        0% {
+            opacity: 0;
+            transform: translateY(30px) scale(0.95);
+        }
+        100% {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+    }
+
+    /* Slide content enhanced styling */
+    .slide .custom-card {
+        transform-origin: center;
+        animation: fadeSlideIn 0.6s ease-out 0.2s both;
+    }
+
+    /* Slide indicators enhanced styling */
     .slide-indicators {
         text-align: center;
         margin-top: 20px;
@@ -530,73 +564,124 @@ st.markdown("""
         border-radius: 50%;
         display: inline-block;
         cursor: pointer;
-        transition: all 0.3s ease;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
     }
 
     .indicator.active {
         background-color: #22c55e;
-        transform: scale(1.2);
-        box-shadow: 0 0 10px rgba(34, 197, 94, 0.5);
+        transform: scale(1.3);
+        box-shadow: 0 0 15px rgba(34, 197, 94, 0.6);
+    }
+
+    .indicator.active::before {
+        content: '';
+        position: absolute;
+        top: -3px;
+        left: -3px;
+        right: -3px;
+        bottom: -3px;
+        border: 2px solid rgba(34, 197, 94, 0.3);
+        border-radius: 50%;
+        animation: pulse-ring 2s infinite;
+    }
+
+    @keyframes pulse-ring {
+        0% {
+            transform: scale(1);
+            opacity: 1;
+        }
+        100% {
+            transform: scale(1.5);
+            opacity: 0;
+        }
     }
 
     .indicator:hover {
         background-color: rgba(34, 197, 94, 0.7);
+        transform: scale(1.1);
+    }
+
+    /* Auto-advance animation indicator */
+    .slide-progress {
+        position: absolute;
+        bottom: -5px;
+        left: 0;
+        height: 3px;
+        background: linear-gradient(90deg, #22c55e, #4ade80);
+        border-radius: 2px;
+        animation: slideProgress 4s linear infinite;
+    }
+
+    @keyframes slideProgress {
+        0% { width: 0%; }
+        100% { width: 100%; }
+    }
+
+    /* Slide transition effects */
+    .slide.slide-out-left {
+        animation: slideOutToLeft 0.5s ease-in-out forwards;
+    }
+
+    .slide.slide-out-right {
+        animation: slideOutToRight 0.5s ease-in-out forwards;
+    }
+
+    @keyframes slideOutToLeft {
+        0% {
+            opacity: 1;
+            transform: translateX(0) scale(1);
+        }
+        100% {
+            opacity: 0;
+            transform: translateX(-100px) scale(0.9);
+        }
+    }
+
+    @keyframes slideOutToRight {
+        0% {
+            opacity: 1;
+            transform: translateX(0) scale(1);
+        }
+        100% {
+            opacity: 0;
+            transform: translateX(100px) scale(0.9);
+        }
+    }
+
+    /* Slideshow pause on hover */
+    .slideshow-container:hover .slide-progress {
+        animation-play-state: paused;
+    }
+
+    /* Enhanced hover effects for slides */
+    .slide:hover .custom-card {
+        transform: translateY(-8px) scale(1.02);
+        box-shadow: 
+            0 25px 50px rgba(0, 0, 0, 0.9),
+            0 0 40px rgba(34, 197, 94, 0.3),
+            inset 0 2px 0 rgba(255, 255, 255, 0.3);
+    }
+
+    /* Responsive slideshow */
+    @media (max-width: 768px) {
+        .slideshow-container {
+            min-height: 250px;
+        }
+        
+        .slide .custom-card {
+            padding: 20px;
+        }
+        
+        .slide .custom-card h3 {
+            font-size: 1.3rem;
+        }
+        
+        .slide .custom-card p {
+            font-size: 0.9rem;
+        }
     }
 </style>
-
-<script>
-let currentSlide = 0;
-const slides = [];
-const indicators = [];
-
-function initSlideshow() {
-    // Get elements after they're rendered
-    const slideElements = document.querySelectorAll('.slide');
-    const indicatorElements = document.querySelectorAll('.indicator');
-    
-    slides.length = 0;
-    indicators.length = 0;
-    
-    slideElements.forEach(slide => slides.push(slide));
-    indicatorElements.forEach(indicator => indicators.push(indicator));
-    
-    if (slides.length > 0) {
-        showSlide(0);
-    }
-}
-
-function showSlide(index) {
-    slides.forEach((slide, i) => {
-        slide.classList.toggle('active', i === index);
-    });
-    indicators.forEach((indicator, i) => {
-        indicator.classList.toggle('active', i === index);
-    });
-}
-
-function nextSlide() {
-    currentSlide = (currentSlide + 1) % slides.length;
-    showSlide(currentSlide);
-}
-
-function goToSlide(index) {
-    currentSlide = index;
-    showSlide(currentSlide);
-}
-
-// Initialize slideshow when page loads
-document.addEventListener('DOMContentLoaded', initSlideshow);
-
-// Also try to initialize after a short delay (for Streamlit's dynamic loading)
-setTimeout(initSlideshow, 500);
-
-// Auto-advance slides every 4 seconds
-setInterval(() => {
-    if (slides.length > 0) {
-        nextSlide();
-    }
-}, 4000);
-</script>
 """, unsafe_allow_html=True)
 
 # Model Configuration
