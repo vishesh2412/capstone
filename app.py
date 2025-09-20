@@ -478,262 +478,111 @@ st.markdown("""
         color: white;
     }
     
-    /* CAROUSEL SLIDESHOW STYLING */
-    .carousel-container {
-        position: relative;
-        width: 100%;
-        height: 400px;
-        margin: 40px 0;
-        perspective: 1200px;
-        overflow: hidden;
-    }
-
-    .carousel-track {
-        position: relative;
-        width: 100%;
-        height: 100%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transform-style: preserve-3d;
-    }
-
-    .carousel-slide {
-        position: absolute;
-        width: 350px;
-        height: 280px;
-        border-radius: 20px;
+    /* STATIC FEATURE BOXES STYLING */
+    .feature-box {
         background: linear-gradient(145deg, #1a1a1a 0%, #2d2d2d 100%);
-        border: 2px solid var(--slide-color, #22c55e);
-        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
-        transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-        cursor: pointer;
-        backdrop-filter: blur(20px);
-    }
-
-    /* Active slide - center front */
-    .carousel-slide.active {
-        transform: translateX(0) translateZ(0) scale(1);
-        z-index: 3;
-        opacity: 1;
-        box-shadow: 
-            0 25px 60px rgba(0, 0, 0, 0.9),
-            0 0 30px var(--slide-color, rgba(34, 197, 94, 0.4));
-    }
-
-    /* Inactive slides positioning */
-    .carousel-slide.inactive[data-index="0"] {
-        transform: translateX(-400px) translateZ(-200px) rotateY(25deg) scale(0.8);
-        opacity: 0.6;
-        z-index: 1;
-    }
-
-    .carousel-slide.inactive[data-index="1"] {
-        transform: translateX(0) translateZ(-300px) rotateY(0deg) scale(0.7);
-        opacity: 0.4;
-        z-index: 0;
-    }
-
-    .carousel-slide.inactive[data-index="2"] {
-        transform: translateX(400px) translateZ(-200px) rotateY(-25deg) scale(0.8);
-        opacity: 0.6;
-        z-index: 1;
-    }
-
-    /* When slide 0 is active */
-    .carousel-slide.active[data-index="0"] ~ .carousel-slide.inactive[data-index="1"] {
-        transform: translateX(400px) translateZ(-200px) rotateY(-25deg) scale(0.8);
-    }
-
-    .carousel-slide.active[data-index="0"] ~ .carousel-slide.inactive[data-index="2"] {
-        transform: translateX(800px) translateZ(-400px) rotateY(-45deg) scale(0.6);
-        opacity: 0.3;
-    }
-
-    /* When slide 1 is active */
-    .carousel-slide.active[data-index="1"] ~ .carousel-slide.inactive[data-index="0"] {
-        transform: translateX(-400px) translateZ(-200px) rotateY(25deg) scale(0.8);
-    }
-
-    .carousel-slide.active[data-index="1"] ~ .carousel-slide.inactive[data-index="2"] {
-        transform: translateX(400px) translateZ(-200px) rotateY(-25deg) scale(0.8);
-    }
-
-    /* When slide 2 is active */
-    .carousel-slide.active[data-index="2"] ~ .carousel-slide.inactive[data-index="0"] {
-        transform: translateX(-800px) translateZ(-400px) rotateY(45deg) scale(0.6);
-        opacity: 0.3;
-    }
-
-    .carousel-slide.active[data-index="2"] ~ .carousel-slide.inactive[data-index="1"] {
-        transform: translateX(-400px) translateZ(-200px) rotateY(25deg) scale(0.8);
-    }
-
-    .slide-content {
+        border: 2px solid var(--box-color);
+        border-radius: 20px;
         padding: 30px;
-        height: 100%;
+        margin: 20px 0;
+        text-align: center;
+        height: 350px;
         display: flex;
         flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        text-align: center;
+        justify-content: space-between;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         position: relative;
-        z-index: 10;
+        backdrop-filter: blur(20px);
+        box-shadow: 
+            0 10px 40px rgba(0, 0, 0, 0.6),
+            0 0 20px var(--box-color, rgba(34, 197, 94, 0.1));
     }
 
-    .slide-icon {
+    .feature-box:hover {
+        transform: translateY(-10px) scale(1.02);
+        border-color: var(--box-color);
+        box-shadow: 
+            0 20px 60px rgba(0, 0, 0, 0.8),
+            0 0 40px var(--box-color, rgba(34, 197, 94, 0.3));
+    }
+
+
+
+    .feature-icon {
         font-size: 4rem;
-        margin-bottom: 15px;
+        margin-bottom: 20px;
         filter: drop-shadow(0 5px 15px rgba(0, 0, 0, 0.5));
+        animation: float 3s ease-in-out infinite;
     }
 
-    .slide-title {
+    @keyframes float {
+        0%, 100% { transform: translateY(0px); }
+        50% { transform: translateY(-10px); }
+    }
+
+    .feature-title {
         font-size: 1.8rem;
         font-weight: 700;
-        color: var(--slide-color, #22c55e);
-        margin-bottom: 15px;
+        color: var(--box-color);
+        margin: 0 0 15px 0;
         text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
     }
 
-    .slide-description {
-        font-size: 0.9rem;
-        line-height: 1.4;
+    .feature-description {
+        font-size: 0.95rem;
+        line-height: 1.5;
         color: rgba(255, 255, 255, 0.85);
-        margin-bottom: 15px;
+        margin: 0 0 20px 0;
+        flex-grow: 1;
+        display: flex;
+        align-items: center;
         text-align: center;
-        max-height: 60px;
-        overflow: hidden;
-        display: -webkit-box;
-        -webkit-line-clamp: 3;
-        -webkit-box-orient: vertical;
     }
 
-    .slide-features {
-        background: rgba(0, 0, 0, 0.3);
-        padding: 10px 15px;
-        border-radius: 10px;
-        border: 1px solid var(--slide-color, rgba(34, 197, 94, 0.3));
-    }
 
-    .slide-features small {
-        color: var(--slide-color, #4ade80);
-        font-size: 0.75rem;
-        font-weight: 500;
-    }
 
-    /* Hover effects */
-    .carousel-slide:hover {
-        transform: translateY(-10px) scale(1.05) !important;
-        box-shadow: 
-            0 30px 70px rgba(0, 0, 0, 1),
-            0 0 40px var(--slide-color, rgba(34, 197, 94, 0.6)) !important;
-    }
-
-    .carousel-slide.active:hover {
-        transform: translateX(0) translateZ(20px) scale(1.05) !important;
-    }
-
-    /* Progress indicator */
-    .carousel-slide.active::before {
-        content: '';
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        height: 4px;
-        background: var(--slide-color, #22c55e);
-        border-radius: 0 0 20px 20px;
-        animation: progressBar 4s linear infinite;
-    }
-
-    @keyframes progressBar {
-        0% { width: 0%; opacity: 0.5; }
-        100% { width: 100%; opacity: 1; }
-    }
-
-    /* Carousel dots styling */
-    .carousel-dots {
-        text-align: center;
-        margin-top: 30px;
-    }
-
-    /* Responsive design */
-    @media (max-width: 1200px) {
-        .carousel-slide {
-            width: 300px;
-            height: 250px;
-        }
-        
-        .carousel-slide.inactive[data-index="0"],
-        .carousel-slide.inactive[data-index="2"] {
-            transform: translateX(-350px) translateZ(-150px) rotateY(20deg) scale(0.75);
-        }
-        
-        .carousel-slide.active[data-index="0"] ~ .carousel-slide.inactive[data-index="1"],
-        .carousel-slide.active[data-index="1"] ~ .carousel-slide.inactive[data-index="2"] {
-            transform: translateX(350px) translateZ(-150px) rotateY(-20deg) scale(0.75);
-        }
-    }
-
+    /* Responsive design for feature boxes */
     @media (max-width: 768px) {
-        .carousel-container {
-            height: 350px;
-        }
-        
-        .carousel-slide {
-            width: 280px;
-            height: 220px;
-        }
-        
-        .slide-content {
+        .feature-box {
+            height: auto;
+            min-height: 300px;
             padding: 20px;
         }
         
-        .slide-icon {
+        .feature-icon {
             font-size: 3rem;
+            margin-bottom: 15px;
         }
         
-        .slide-title {
+        .feature-title {
             font-size: 1.4rem;
         }
         
-        .slide-description {
-            font-size: 0.8rem;
-            max-height: 50px;
-            -webkit-line-clamp: 2;
+        .feature-description {
+            font-size: 0.9rem;
         }
         
-        /* Stack slides vertically on mobile */
-        .carousel-slide.inactive {
-            transform: translateY(100px) scale(0.8) !important;
-            opacity: 0.3 !important;
+        .feature-tags {
+            flex-direction: column;
+        }
+        
+        .tag {
+            font-size: 0.7rem;
+            padding: 5px 10px;
         }
     }
 
-    /* Additional animations */
-    @keyframes slideRotate {
-        0% { transform: rotateY(0deg); }
-        100% { transform: rotateY(360deg); }
+    /* Enhanced hover effects for individual feature boxes */
+    .feature-box:nth-child(1):hover {
+        background: linear-gradient(145deg, #1a1a1a 0%, #1a2e1a 100%);
     }
 
-    .carousel-slide.active .slide-icon {
-        animation: bounce 2s infinite;
+    .feature-box:nth-child(2):hover {
+        background: linear-gradient(145deg, #1a1a1a 0%, #1a1e2e 100%);
     }
 
-    @keyframes bounce {
-        0%, 20%, 50%, 80%, 100% {
-            transform: translateY(0);
-        }
-        40% {
-            transform: translateY(-10px);
-        }
-        60% {
-            transform: translateY(-5px);
-        }
-    }
-
-    /* Pause animation on container hover */
-    .carousel-container:hover .carousel-slide.active::before {
-        animation-play-state: paused;
+    .feature-box:nth-child(3):hover {
+        background: linear-gradient(145deg, #1a1a1a 0%, #2e251a 100%);
     }
 </style>
 """, unsafe_allow_html=True)
@@ -1049,7 +898,7 @@ def initialize_database_once():
                 if cursor:
                     try:
                         create_tables_with_cursor(cursor)
-                        st.success("✅ Database tables ready!")
+                        # st.success("✅ Database tables ready!")
                     except Exception as e:
                         st.warning(f"Database setup issue: {str(e)}")
 
@@ -1202,108 +1051,41 @@ if 'user_profile' not in st.session_state:
     st.session_state.user_profile = {}
 
 def home_page():
-    """Home page with attractive landing and automatic carousel slideshow"""
+    """Home page with attractive landing and three static feature boxes"""
     st.markdown('<div class="slide-in-up">', unsafe_allow_html=True)
     st.markdown('<h1 class="main-header">🌾 LIRA Pro</h1>', unsafe_allow_html=True)
     st.markdown('<p class="sub-header">Sugarcane Disease Detection System</p>', unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
     
-    # Initialize slideshow state
-    if 'slide_index' not in st.session_state:
-        st.session_state.slide_index = 0
-    if 'last_slide_time' not in st.session_state:
-        st.session_state.last_slide_time = time.time()
+    # Three static feature boxes
+    col1, col2, col3 = st.columns(3, gap="medium")
     
-    # Auto-advance slides every 4 seconds
-    current_time = time.time()
-    if current_time - st.session_state.last_slide_time > 4:
-        st.session_state.slide_index = (st.session_state.slide_index + 1) % 3
-        st.session_state.last_slide_time = current_time
-        st.rerun()
-    
-    # Feature slides content
-    slides = [
-        {
-            "icon": "🔍",
-            "title": "Smart Detection",
-            "description": "Advanced CNN models trained on comprehensive sugarcane leaf datasets for accurate disease identification with 95%+ accuracy",
-            "features": "🎯 Real-time Analysis • 🧠 Deep Learning • 📊 95%+ Accuracy",
-            "color": "#22c55e"
-        },
-        {
-            "icon": "📊", 
-            "title": "Severity Analysis",
-            "description": "Horsfall-Barratt scale integration for precise disease severity assessment and progression monitoring in real-time",
-            "features": "📈 Scale Integration • ⏱️ Real-time • 🎯 Precision Monitoring",
-            "color": "#3b82f6"
-        },
-        {
-            "icon": "💡",
-            "title": "Smart Advisory", 
-            "description": "Personalized treatment recommendations and crop management insights powered by machine learning algorithms",
-            "features": "🤖 ML Powered • 📋 Personalized • 🌱 Crop Management",
-            "color": "#f59e0b"
-        }
-    ]
-    
-    # Create carousel with all slides visible
-    st.markdown(f"""
-    <div class="carousel-container">
-        <div class="carousel-track" id="carousel-track">
-            {chr(10).join([f'''
-            <div class="carousel-slide {'active' if i == st.session_state.slide_index else 'inactive'}" 
-                 data-index="{i}" 
-                 style="--slide-color: {slide['color']};">
-                <div class="slide-content">
-                    <div class="slide-icon">{slide['icon']}</div>
-                    <h3 class="slide-title">{slide['title']}</h3>
-                    <p class="slide-description">{slide['description']}</p>
-                    <div class="slide-features">
-                        <small>{slide['features']}</small>
-                    </div>
-                </div>
-            </div>
-            ''' for i, slide in enumerate(slides)])}
+    with col1:
+        st.markdown("""
+        <div class="feature-box" style="--box-color: #22c55e;">
+            <div class="feature-icon">🔍</div>
+            <h3 class="feature-title">Smart Detection</h3>
+            <p class="feature-description">Advanced CNN models trained on comprehensive sugarcane leaf datasets for accurate disease identification with 95%+ accuracy</p>
         </div>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    # Navigation dots
-    st.markdown('<div class="carousel-dots">', unsafe_allow_html=True)
-    
-    col1, col2, col3, col4, col5 = st.columns([2, 1, 1, 1, 2])
+        """, unsafe_allow_html=True)
     
     with col2:
-        if st.button("●" if st.session_state.slide_index == 0 else "○", 
-                    key="slide_0", 
-                    help="Smart Detection"):
-            st.session_state.slide_index = 0
-            st.session_state.last_slide_time = time.time()
-            st.rerun()
+        st.markdown("""
+        <div class="feature-box" style="--box-color: #3b82f6;">
+            <div class="feature-icon">📊</div>
+            <h3 class="feature-title">Severity Analysis</h3>
+            <p class="feature-description">Horsfall-Barratt scale integration for precise disease severity assessment and progression monitoring in real-time</p>
+        </div>
+        """, unsafe_allow_html=True)
     
     with col3:
-        if st.button("●" if st.session_state.slide_index == 1 else "○", 
-                    key="slide_1", 
-                    help="Severity Analysis"):
-            st.session_state.slide_index = 1
-            st.session_state.last_slide_time = time.time()
-            st.rerun()
-    
-    with col4:
-        if st.button("●" if st.session_state.slide_index == 2 else "○", 
-                    key="slide_2", 
-                    help="Smart Advisory"):
-            st.session_state.slide_index = 2
-            st.session_state.last_slide_time = time.time()
-            st.rerun()
-    
-    st.markdown('</div>', unsafe_allow_html=True)
-    
-    # Auto-refresh trigger for continuous slideshow
-    placeholder = st.empty()
-    with placeholder:
-        time.sleep(0.1)
-    placeholder.empty()
+        st.markdown("""
+        <div class="feature-box" style="--box-color: #f59e0b;">
+            <div class="feature-icon">💡</div>
+            <h3 class="feature-title">Smart Advisory</h3>
+            <p class="feature-description">Personalized treatment recommendations and crop management insights powered by machine learning algorithms</p>
+        </div>
+        """, unsafe_allow_html=True)
     
     # Statistics section
     st.markdown("---")
