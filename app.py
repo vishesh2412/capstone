@@ -1148,7 +1148,7 @@ if 'user_profile' not in st.session_state:
     st.session_state.user_profile = {}
 
 def home_page():
-    """Home page with attractive landing and automatic slideshow"""
+    """Home page with attractive landing and automatic carousel slideshow"""
     st.markdown('<div class="slide-in-up">', unsafe_allow_html=True)
     st.markdown('<h1 class="main-header">🌾 LIRA Pro</h1>', unsafe_allow_html=True)
     st.markdown('<p class="sub-header">Sugarcane Disease Detection System</p>', unsafe_allow_html=True)
@@ -1165,7 +1165,6 @@ def home_page():
     if current_time - st.session_state.last_slide_time > 4:
         st.session_state.slide_index = (st.session_state.slide_index + 1) % 3
         st.session_state.last_slide_time = current_time
-        # Use st.rerun() to refresh and show next slide
         st.rerun()
     
     # Feature slides content
@@ -1174,44 +1173,49 @@ def home_page():
             "icon": "🔍",
             "title": "Smart Detection",
             "description": "Advanced CNN models trained on comprehensive sugarcane leaf datasets for accurate disease identification with 95%+ accuracy",
-            "features": "🎯 Real-time Analysis • 🧠 Deep Learning • 📊 95%+ Accuracy"
+            "features": "🎯 Real-time Analysis • 🧠 Deep Learning • 📊 95%+ Accuracy",
+            "color": "#22c55e"
         },
         {
             "icon": "📊", 
             "title": "Severity Analysis",
             "description": "Horsfall-Barratt scale integration for precise disease severity assessment and progression monitoring in real-time",
-            "features": "📈 Scale Integration • ⏱️ Real-time • 🎯 Precision Monitoring"
+            "features": "📈 Scale Integration • ⏱️ Real-time • 🎯 Precision Monitoring",
+            "color": "#3b82f6"
         },
         {
             "icon": "💡",
             "title": "Smart Advisory", 
             "description": "Personalized treatment recommendations and crop management insights powered by machine learning algorithms",
-            "features": "🤖 ML Powered • 📋 Personalized • 🌱 Crop Management"
+            "features": "🤖 ML Powered • 📋 Personalized • 🌱 Crop Management",
+            "color": "#f59e0b"
         }
     ]
     
-    current_slide = slides[st.session_state.slide_index]
-    
-    # Display current slide with animation
+    # Create carousel with all slides visible
     st.markdown(f"""
-    <div class="slideshow-container">
-        <div class="slide active" id="slide-{st.session_state.slide_index}">
-            <div class="custom-card fade-in-scale">
-                <div style="text-align: center;">
-                    <div style="font-size: 4rem; margin-bottom: 20px;">{current_slide['icon']}</div>
-                    <h3>{current_slide['title']}</h3>
-                    <p>{current_slide['description']}</p>
-                    <div style="margin-top: 20px; padding: 15px; background: rgba(34, 197, 94, 0.1); border-radius: 10px;">
-                        <small style="color: #4ade80;">{current_slide['features']}</small>
+    <div class="carousel-container">
+        <div class="carousel-track" id="carousel-track">
+            {chr(10).join([f'''
+            <div class="carousel-slide {'active' if i == st.session_state.slide_index else 'inactive'}" 
+                 data-index="{i}" 
+                 style="--slide-color: {slide['color']};">
+                <div class="slide-content">
+                    <div class="slide-icon">{slide['icon']}</div>
+                    <h3 class="slide-title">{slide['title']}</h3>
+                    <p class="slide-description">{slide['description']}</p>
+                    <div class="slide-features">
+                        <small>{slide['features']}</small>
                     </div>
                 </div>
             </div>
+            ''' for i, slide in enumerate(slides)])}
         </div>
     </div>
     """, unsafe_allow_html=True)
     
-    # Manual navigation indicators (still functional)
-    st.markdown('<div style="text-align: center; margin-top: 20px;">', unsafe_allow_html=True)
+    # Navigation dots
+    st.markdown('<div class="carousel-dots">', unsafe_allow_html=True)
     
     col1, col2, col3, col4, col5 = st.columns([2, 1, 1, 1, 2])
     
@@ -1220,7 +1224,7 @@ def home_page():
                     key="slide_0", 
                     help="Smart Detection"):
             st.session_state.slide_index = 0
-            st.session_state.last_slide_time = time.time()  # Reset timer when manually clicked
+            st.session_state.last_slide_time = time.time()
             st.rerun()
     
     with col3:
@@ -1228,7 +1232,7 @@ def home_page():
                     key="slide_1", 
                     help="Severity Analysis"):
             st.session_state.slide_index = 1
-            st.session_state.last_slide_time = time.time()  # Reset timer when manually clicked
+            st.session_state.last_slide_time = time.time()
             st.rerun()
     
     with col4:
@@ -1236,7 +1240,7 @@ def home_page():
                     key="slide_2", 
                     help="Smart Advisory"):
             st.session_state.slide_index = 2
-            st.session_state.last_slide_time = time.time()  # Reset timer when manually clicked
+            st.session_state.last_slide_time = time.time()
             st.rerun()
     
     st.markdown('</div>', unsafe_allow_html=True)
@@ -1244,7 +1248,6 @@ def home_page():
     # Auto-refresh trigger for continuous slideshow
     placeholder = st.empty()
     with placeholder:
-        # Small delay to ensure smooth transitions
         time.sleep(0.1)
     placeholder.empty()
     
@@ -1275,10 +1278,8 @@ def home_page():
                     disease_types = result['disease_types'] if result else 0
                     
                 except:
-                    # If queries fail, use demo data
                     total_users, total_scans, total_diseases, disease_types = 42, 186, 89, 5
     else:
-        # Database not available - use demo data
         total_users, total_scans, total_diseases, disease_types = 42, 186, 89, 5
     
     col1, col2, col3, col4 = st.columns(4)
@@ -1328,7 +1329,7 @@ def home_page():
     </div>
     """, unsafe_allow_html=True)
     
-    # Action buttons with form-based approach for better handling
+    # Action buttons
     if not st.session_state.logged_in:
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
@@ -1336,14 +1337,12 @@ def home_page():
                 st.session_state.page = "Login"
                 st.rerun()
     else:
-        # Main CTA button
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
             if st.button("📸 Start Disease Detection", key="cta_scan", use_container_width=True, type="primary"):
                 st.session_state.page = "Disease Scanner"
                 st.rerun()
         
-        # Quick access buttons
         st.markdown("<br>", unsafe_allow_html=True)
         col1, col2, col3 = st.columns([1, 1, 1])
         
@@ -1354,11 +1353,10 @@ def home_page():
         
         with col2:
             if st.button("📊 View Analytics", key="quick_analytics", use_container_width=True):
-                st.session_state.page = "Analytics"  
+                st.session_state.page = "Analytics"
                 st.rerun()
                 
         with col3:
-            # Add a logout button here as well
             if st.button("🚪 Logout", key="quick_logout", use_container_width=True):
                 st.session_state.logged_in = False
                 st.session_state.user_profile = {}
